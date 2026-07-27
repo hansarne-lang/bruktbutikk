@@ -13,9 +13,12 @@ const INTERACT_DIST:= 130.0    # Avstand for å trigge interaksjon
 @onready var output_scroll                 = $UI/Terminal/TerminalVBox/ScreenBg/OutputScroll
 @onready var breakout_panel                = $UI/BreakoutPanel
 @onready var breakout_canvas               = $UI/BreakoutPanel/BreakoutVBox/BreakoutCanvas
+@onready var snake_panel                   = $UI/SnakePanel
+@onready var snake_canvas                  = $UI/SnakePanel/SnakeVBox/SnakeCanvas
 
 var terminal_open  : bool = false
 var breakout_open  : bool = false
+var snake_open     : bool = false
 
 # ── BASIC-tolker ─────────────────────────────────────────────
 var basic_vars     : Dictionary = {}   # variabellagring
@@ -28,6 +31,7 @@ func _ready() -> void:
 	$UI/Terminal/TerminalVBox/CloseBar/CloseButton.pressed.connect(_close_terminal)
 	input_field.text_submitted.connect(_on_input_submitted)
 	breakout_canvas.game_closed.connect(_close_breakout)
+	snake_canvas.game_closed.connect(_close_snake)
 
 	_print_to_terminal("    **** COMMODORE 64 BASIC V2 ****")
 	_print_to_terminal("")
@@ -38,7 +42,7 @@ func _ready() -> void:
 
 # ── Bevegelse og nærhet ───────────────────────────────────────
 func _process(delta: float) -> void:
-	if terminal_open:
+	if terminal_open or snake_open:
 		return
 
 	var dir := 0.0
@@ -64,8 +68,8 @@ func _input(event: InputEvent) -> void:
 	if not event is InputEventKey: return
 	var key := event as InputEventKey
 	if not key.pressed or key.echo: return
-	if breakout_open:
-		return   # BreakoutCanvas håndterer input selv
+	if breakout_open or snake_open:
+		return   # BreakoutCanvas / SnakeCanvas håndterer input selv
 	if terminal_open:
 		if key.keycode == KEY_ESCAPE:
 			_close_terminal()
@@ -108,6 +112,23 @@ func _close_breakout() -> void:
 	_print_to_terminal("")
 	_print_to_terminal("READY.")
 
+func _open_snake() -> void:
+	terminal_open       = false
+	terminal.visible    = false
+	snake_open          = true
+	snake_panel.visible = true
+	snake_canvas.restart()
+
+func _close_snake() -> void:
+	snake_open          = false
+	snake_panel.visible = false
+	terminal_open       = true
+	terminal.visible    = true
+	input_field.grab_focus()
+	_print_to_terminal("SNAKE AVSLUTTET  SCORE: %d" % snake_canvas.score)
+	_print_to_terminal("")
+	_print_to_terminal("READY.")
+
 # ── Input-behandling ─────────────────────────────────────────
 func _on_input_submitted(text: String) -> void:
 	var cmd := text.strip_edges().to_upper()
@@ -144,6 +165,7 @@ func _run_immediate(cmd: String) -> void:
 			_print_to_terminal("  10 PRINT \"...\"    – lagre programlinje")
 			_print_to_terminal("  LOAD \"BREAKOUT\"   – start Breakout-spillet")
 			_print_to_terminal("  LOAD \"BREAKOUT\",8 – (alternativ syntaks)")
+			_print_to_terminal("  LOAD \"SNAKE\"      – start Snake-spillet")
 		"CLS":
 			basic_output.clear()
 			output_label.text = ""
@@ -162,7 +184,7 @@ func _run_immediate(cmd: String) -> void:
 		"RUN":
 			_run_program()
 		_:
-			# LOAD "BREAKOUT" eller LOAD "BREAKOUT",8
+			# LOAD "BREAKOUT" eller LOAD "SNAKE"
 			if cmd.begins_with("LOAD") and ("BREAKOUT" in cmd):
 				_print_to_terminal("SEARCHING FOR BREAKOUT...")
 				_print_to_terminal("LOADING FROM DRIVE 8...")
@@ -170,6 +192,13 @@ func _run_immediate(cmd: String) -> void:
 				_print_to_terminal("")
 				await get_tree().create_timer(0.8).timeout
 				_open_breakout()
+			elif cmd.begins_with("LOAD") and ("SNAKE" in cmd):
+				_print_to_terminal("SEARCHING FOR SNAKE...")
+				_print_to_terminal("LOADING FROM DRIVE 8...")
+				_print_to_terminal("READY.")
+				_print_to_terminal("")
+				await get_tree().create_timer(0.8).timeout
+				_open_snake()
 			else:
 				_eval_statement(cmd)
 

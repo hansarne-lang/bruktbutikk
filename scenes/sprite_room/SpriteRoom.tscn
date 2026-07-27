@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/sprite_room/SpriteRoom.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/images/player.png" id="2"]
@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" path="res://assets/images/tv.png" id="4"]
 [ext_resource type="Texture2D" path="res://assets/images/computer_old.png" id="5"]
 [ext_resource type="Script" path="res://scripts/sprite_room/BreakoutCanvas.gd" id="6"]
+[ext_resource type="Script" path="res://scripts/sprite_room/SnakeCanvas.gd" id="7"]
 
 [node name="SpriteRoom" type="Node2D"]
 script = ExtResource("1")
@@ -141,4 +142,26 @@ theme_override_colors/font_color = Color(0.4, 1.0, 0.4, 1)
 
 [node name="BreakoutCanvas" type="Control" parent="UI/BreakoutPanel/BreakoutVBox"]
 script = ExtResource("6")
+custom_minimum_size = Vector2(780, 480)
+
+[node name="SnakePanel" type="PanelContainer" parent="UI"]
+position = Vector2(40, 30)
+size = Vector2(800, 560)
+visible = false
+
+[node name="SnakeVBox" type="VBoxContainer" parent="UI/SnakePanel"]
+theme_override_constants/separation = 0
+
+[node name="SnakeTitleBar" type="ColorRect" parent="UI/SnakePanel/SnakeVBox"]
+color = Color(0.0, 0.18, 0.0, 1)
+custom_minimum_size = Vector2(0, 32)
+
+[node name="SnakeTitleLabel" type="Label" parent="UI/SnakePanel/SnakeVBox/SnakeTitleBar"]
+position = Vector2(8, 6)
+text = " ★ SNAKE  –  COMMODORE ARCADE  ★"
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.4, 1.0, 0.4, 1)
+
+[node name="SnakeCanvas" type="Control" parent="UI/SnakePanel/SnakeVBox"]
+script = ExtResource("7")
 custom_minimum_size = Vector2(780, 480)

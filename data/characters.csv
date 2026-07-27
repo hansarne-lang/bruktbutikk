@@ -1,0 +1,4 @@
+"id","name","role","age","happiness_start","energy_start","relation","description"
+"player","Spilleren","Spiller","40","70","100","selv","Deg selv"
+"partner","Kari","Partner","38","60","80","partner","Samboer, jobber som sykepleier"
+"child_01","Emil","Barn","10","80","90","barn","Eldste barn, glad i fotball"

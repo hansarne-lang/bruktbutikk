@@ -1,0 +1,5 @@
+"id","name","type","difficulty","time_hours","loot_table","description"
+"house_01","Gammelt hus i Gamlebyen","Bolig","2","4","lamp_01,chair_01","70 kvm, klassisk Oslo-leilighet"
+"cabin_01","Hytte på Nordmarka","Hytte","3","6","book_lot","Enkel hytte, ingen strøm"
+"apt_01","Leilighet Grünerløkka","Leilighet","1","2","lamp_01","Moderne leilighet, lite rot"
+"📋 loot_table = kommaseparert liste med item-IDer","","","","","",""

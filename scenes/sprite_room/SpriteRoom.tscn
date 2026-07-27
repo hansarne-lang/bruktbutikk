@@ -1,0 +1,144 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/sprite_room/SpriteRoom.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/images/player.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/images/table.png" id="3"]
+[ext_resource type="Texture2D" path="res://assets/images/tv.png" id="4"]
+[ext_resource type="Texture2D" path="res://assets/images/computer_old.png" id="5"]
+[ext_resource type="Script" path="res://scripts/sprite_room/BreakoutCanvas.gd" id="6"]
+
+[node name="SpriteRoom" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="."]
+color = Color(0.22, 0.18, 0.24, 1)
+size = Vector2(1280, 590)
+
+[node name="Floor" type="ColorRect" parent="."]
+color = Color(0.32, 0.24, 0.16, 1)
+position = Vector2(0, 490)
+size = Vector2(1280, 100)
+
+[node name="WallStripe" type="ColorRect" parent="."]
+color = Color(0.18, 0.14, 0.20, 1)
+position = Vector2(0, 0)
+size = Vector2(1280, 120)
+
+[node name="Table" type="Sprite2D" parent="."]
+position = Vector2(520, 450)
+texture = ExtResource("3")
+
+[node name="TV" type="Sprite2D" parent="."]
+position = Vector2(520, 370)
+texture = ExtResource("4")
+
+[node name="Computer" type="Sprite2D" parent="."]
+position = Vector2(900, 430)
+texture = ExtResource("5")
+
+[node name="Player" type="Sprite2D" parent="."]
+position = Vector2(200, 450)
+texture = ExtResource("2")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="HUD" type="HBoxContainer" parent="UI"]
+position = Vector2(10, 8)
+theme_override_constants/separation = 20
+
+[node name="TitleLabel" type="Label" parent="UI/HUD"]
+text = "🎨 Sprite-rom"
+theme_override_font_sizes/font_size = 16
+
+[node name="BackButton" type="Button" parent="UI/HUD"]
+text = "← Tilbake til butikk"
+
+[node name="HintLabel" type="Label" parent="UI"]
+position = Vector2(10, 555)
+text = "A/D eller ← → for å gå  •  E for å interagere"
+theme_override_font_sizes/font_size = 13
+
+[node name="InteractPrompt" type="PanelContainer" parent="UI"]
+position = Vector2(780, 320)
+size = Vector2(200, 40)
+visible = false
+
+[node name="InteractLabel" type="Label" parent="UI/InteractPrompt"]
+text = "  [E]  Åpne terminal"
+theme_override_font_sizes/font_size = 13
+
+[node name="Terminal" type="PanelContainer" parent="UI"]
+position = Vector2(128, 72)
+size = Vector2(1024, 576)
+visible = false
+
+[node name="TerminalVBox" type="VBoxContainer" parent="UI/Terminal"]
+theme_override_constants/separation = 0
+
+[node name="TitleBar" type="ColorRect" parent="UI/Terminal/TerminalVBox"]
+color = Color(0.05, 0.3, 0.05, 1)
+custom_minimum_size = Vector2(0, 28)
+
+[node name="TitleText" type="Label" parent="UI/Terminal/TerminalVBox/TitleBar"]
+position = Vector2(8, 4)
+text = " ★ COMMODORE BASIC V2  64K RAM SYSTEM  ★"
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.6, 1.0, 0.6, 1)
+
+[node name="ScreenBg" type="ColorRect" parent="UI/Terminal/TerminalVBox"]
+color = Color(0.02, 0.06, 0.02, 1)
+custom_minimum_size = Vector2(0, 506)
+
+[node name="OutputScroll" type="ScrollContainer" parent="UI/Terminal/TerminalVBox/ScreenBg"]
+position = Vector2(12, 8)
+size = Vector2(994, 450)
+
+[node name="OutputLabel" type="Label" parent="UI/Terminal/TerminalVBox/ScreenBg/OutputScroll"]
+custom_minimum_size = Vector2(974, 0)
+theme_override_colors/font_color = Color(0.4, 1.0, 0.4, 1)
+theme_override_font_sizes/font_size = 14
+autowrap_mode = 3
+
+[node name="InputRow" type="HBoxContainer" parent="UI/Terminal/TerminalVBox/ScreenBg"]
+position = Vector2(12, 466)
+size = Vector2(994, 36)
+
+[node name="Prompt" type="Label" parent="UI/Terminal/TerminalVBox/ScreenBg/InputRow"]
+text = "READY.\n] "
+theme_override_colors/font_color = Color(0.4, 1.0, 0.4, 1)
+theme_override_font_sizes/font_size = 14
+
+[node name="InputField" type="LineEdit" parent="UI/Terminal/TerminalVBox/ScreenBg/InputRow"]
+custom_minimum_size = Vector2(920, 30)
+theme_override_colors/font_color = Color(0.4, 1.0, 0.4, 1)
+theme_override_colors/caret_color = Color(0.4, 1.0, 0.4, 1)
+theme_override_font_sizes/font_size = 14
+
+[node name="CloseBar" type="HBoxContainer" parent="UI/Terminal/TerminalVBox"]
+theme_override_constants/separation = 10
+
+[node name="CloseButton" type="Button" parent="UI/Terminal/TerminalVBox/CloseBar"]
+text = "ESC – Lukk terminal"
+custom_minimum_size = Vector2(200, 30)
+
+[node name="BreakoutPanel" type="PanelContainer" parent="UI"]
+position = Vector2(40, 30)
+size = Vector2(800, 560)
+visible = false
+
+[node name="BreakoutVBox" type="VBoxContainer" parent="UI/BreakoutPanel"]
+theme_override_constants/separation = 0
+
+[node name="BreakoutTitleBar" type="ColorRect" parent="UI/BreakoutPanel/BreakoutVBox"]
+color = Color(0.0, 0.18, 0.0, 1)
+custom_minimum_size = Vector2(0, 32)
+
+[node name="BreakoutTitleLabel" type="Label" parent="UI/BreakoutPanel/BreakoutVBox/BreakoutTitleBar"]
+position = Vector2(8, 6)
+text = " ★ BREAKOUT  –  COMMODORE ARCADE  ★"
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.4, 1.0, 0.4, 1)
+
+[node name="BreakoutCanvas" type="Control" parent="UI/BreakoutPanel/BreakoutVBox"]
+script = ExtResource("6")
+custom_minimum_size = Vector2(780, 480)

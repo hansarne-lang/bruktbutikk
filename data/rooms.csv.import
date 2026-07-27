@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://cnkjr1opb4otg"
+
+[deps]
+
+files=["res://data/rooms.name.translation", "res://data/rooms.type.translation", "res://data/rooms.difficulty.translation", "res://data/rooms.time.translation", "res://data/rooms.loot.translation", "res://data/rooms.description.translation"]
+
+source_file="res://data/rooms.csv"
+dest_files=["res://data/rooms.name.translation", "res://data/rooms.type.translation", "res://data/rooms.difficulty.translation", "res://data/rooms.time.translation", "res://data/rooms.loot.translation", "res://data/rooms.description.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

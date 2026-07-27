@@ -1,0 +1,87 @@
+name: Bruktbutikk CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  # ── 1. Valider syntaks og struktur ───────────────────────────
+  validate:
+    name: Valider prosjektet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer Godot 4.7.1 headless
+        run: |
+          wget -q https://github.com/godotengine/godot/releases/download/4.7.1-stable/Godot_v4.7.1-stable_linux.x86_64.zip
+          unzip -q Godot_v4.7.1-stable_linux.x86_64.zip
+          mv Godot_v4.7.1-stable_linux.x86_64 /usr/local/bin/godot
+          chmod +x /usr/local/bin/godot
+
+      - name: Importer og valider prosjekt
+        run: |
+          timeout 60 godot --headless --quit --path . 2>&1 | tee godot_output.txt || true
+          if grep -qE "^ERROR:" godot_output.txt; then
+            echo "❌ Feil funnet:"
+            grep "^ERROR:" godot_output.txt
+            exit 1
+          fi
+          echo "✅ Ingen kritiske feil"
+
+      - name: Last opp logg ved feil
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: godot-feillogg
+          path: godot_output.txt
+
+  # ── 2. Eksporter til HTML5 og deploy til GitHub Pages ────────
+  export-web:
+    name: Eksporter og deploy til GitHub Pages
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer Godot 4.7.1 + eksport-maler
+        run: |
+          # Godot binary
+          wget -q https://github.com/godotengine/godot/releases/download/4.7.1-stable/Godot_v4.7.1-stable_linux.x86_64.zip
+          unzip -q Godot_v4.7.1-stable_linux.x86_64.zip
+          mv Godot_v4.7.1-stable_linux.x86_64 /usr/local/bin/godot
+          chmod +x /usr/local/bin/godot
+          # Eksport-maler
+          mkdir -p ~/.local/share/godot/export_templates/4.7.1.stable
+          wget -q https://github.com/godotengine/godot/releases/download/4.7.1-stable/Godot_v4.7.1-stable_export_templates.tpz
+          unzip -q Godot_v4.7.1-stable_export_templates.tpz -d /tmp/tpl
+          mv /tmp/tpl/templates/* ~/.local/share/godot/export_templates/4.7.1.stable/
+
+      - name: Eksporter til Web (HTML5)
+        run: |
+          mkdir -p export/web
+          godot --headless --export-release "Web" export/web/index.html --path . 2>&1
+
+      - name: Konfigurer GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Last opp til Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: export/web
+
+      - name: Deploy til GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

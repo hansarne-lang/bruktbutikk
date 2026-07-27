@@ -1,0 +1,19 @@
+# Godot-spesifikke filer
+.godot/
+*.translation
+
+# Eksporterte bygg
+export/
+builds/
+
+# OS-spesifikke
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+
+# Midlertidige filer
+*.tmp
+*.bak

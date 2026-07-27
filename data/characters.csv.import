@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://lgn386jm2t7j"
+
+[deps]
+
+files=["res://data/characters.name.translation", "res://data/characters.role.translation", "res://data/characters.age.translation", "res://data/characters.happiness.translation", "res://data/characters.energy.translation", "res://data/characters.relation.translation", "res://data/characters.description.translation"]
+
+source_file="res://data/characters.csv"
+dest_files=["res://data/characters.name.translation", "res://data/characters.role.translation", "res://data/characters.age.translation", "res://data/characters.happiness.translation", "res://data/characters.energy.translation", "res://data/characters.relation.translation", "res://data/characters.description.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

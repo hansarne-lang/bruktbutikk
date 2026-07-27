@@ -1,0 +1,8 @@
+"key","value","description"
+"start_money","5000","Startkapital i kroner"
+"max_shop_items","20","Maks antall varer i butikken"
+"day_length_seconds","300","Lengde på én spilldag (sekunder)"
+"price_fluctuation","0.15","Prisvariasjon ± (0.15 = 15%)"
+"family_meal_bonus","10","Lykkepoeng for familemiddag"
+"cleanup_travel_cost","200","Reisekostnad til oppdrag (kr)"
+"⚙️ Endre 'value' for å justere spillbalanse","",""

@@ -1,0 +1,7 @@
+"id","name","required_item_ids","bonus_multiplier","description"
+"stue_sett_01","Komplett stue","lamp_01,chair_01,sofa_01","1.35","Sofa + stol + lampe = 35% bonus"
+"required_item_ids: kommaseparert liste med item-IDer som må være med for komplett sett","","","",""
+"c64_komplett","Commodore 64 komplett","c64_computer,c64_datasette,c64_joystick","1.8","C64 + datasette + joystick = 80% bonus"
+"c64_komplett_boks","C64 komplett m/originalboks","c64_computer,c64_datasette,c64_joystick,c64_box","2.5","Alt inkl. original eske = 150% bonus!"
+"c64_breakout","C64 + Breakout-spill","c64_computer,breakout_cart","1.4","C64 med Breakout-kassett = 40% bonus"
+"c64_breakout_full","C64 komplett + Breakout","c64_computer,c64_datasette,c64_joystick,breakout_cart","2.2","Full C64-pakke med Breakout = 120% bonus!"

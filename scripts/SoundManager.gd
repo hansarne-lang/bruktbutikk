@@ -6,7 +6,7 @@ var _cache: Dictionary = {}
 
 # ── API ──────────────────────────────────────────────────────
 func play(sound_id: String, vol_db: float = 0.0) -> void:
-	var stream := _get(sound_id)
+	var stream := _fetch(sound_id)
 	if stream == null: return
 	var p := AudioStreamPlayer.new()
 	p.stream    = stream
@@ -16,7 +16,7 @@ func play(sound_id: String, vol_db: float = 0.0) -> void:
 	p.finished.connect(p.queue_free)
 
 # ── Cache + generering ────────────────────────────────────────
-func _get(id: String) -> AudioStreamWAV:
+func _fetch(id: String) -> AudioStreamWAV:
 	if id in _cache:
 		return _cache[id]
 	var s := _gen(id)

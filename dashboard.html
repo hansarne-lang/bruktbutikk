@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bruktbutikk – Deploy Dashboard</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; min-height: 100vh; padding: 24px; }
+  h1 { font-size: 1.4rem; font-weight: 600; margin-bottom: 4px; }
+  .subtitle { color: #8b949e; font-size: 0.85rem; margin-bottom: 24px; }
+
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+  .card-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #8b949e; margin-bottom: 12px; }
+
+  /* Token-setup */
+  #setup { }
+  #setup input { width: 100%; padding: 10px 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #e6edf3; font-size: 0.9rem; margin-bottom: 10px; }
+  #setup input:focus { outline: none; border-color: #58a6ff; }
+  #setup small { color: #8b949e; font-size: 0.78rem; display: block; margin-bottom: 10px; }
+
+  /* Status */
+  .status-row { display: flex; align-items: center; gap: 12px; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+  .badge.success { background: #1a4a2e; color: #3fb950; }
+  .badge.failure { background: #4a1a1a; color: #f85149; }
+  .badge.in_progress { background: #1a3a4a; color: #58a6ff; }
+  .badge.pending { background: #2a2a1a; color: #d29922; }
+  .badge.unknown { background: #21262d; color: #8b949e; }
+  .pulse { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .status-meta { color: #8b949e; font-size: 0.82rem; }
+  .status-msg { font-size: 0.9rem; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 420px; }
+
+  /* Knapper */
+  .btn { padding: 9px 18px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.88rem; font-weight: 600; transition: opacity 0.15s; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary { background: #238636; color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: #2ea043; }
+  .btn-secondary { background: #21262d; color: #e6edf3; border: 1px solid #30363d; }
+  .btn-secondary:hover:not(:disabled) { background: #30363d; }
+  .btn-danger { background: #6e2020; color: #fff; }
+  .btn-danger:hover:not(:disabled) { background: #8a2727; }
+
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
+  /* Deploy-input */
+  #deploy-msg { padding: 9px 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #e6edf3; font-size: 0.88rem; width: 100%; margin-bottom: 10px; }
+  #deploy-msg:focus { outline: none; border-color: #58a6ff; }
+
+  /* Commit-liste */
+  .commit { padding: 10px 0; border-bottom: 1px solid #21262d; display: flex; gap: 12px; align-items: flex-start; }
+  .commit:last-child { border-bottom: none; }
+  .commit-sha { font-family: monospace; font-size: 0.78rem; color: #58a6ff; min-width: 52px; }
+  .commit-msg { font-size: 0.85rem; flex: 1; }
+  .commit-date { font-size: 0.75rem; color: #8b949e; white-space: nowrap; }
+
+  /* Bygg-liste */
+  .run { padding: 8px 0; border-bottom: 1px solid #21262d; display: flex; gap: 10px; align-items: center; }
+  .run:last-child { border-bottom: none; }
+  .run-name { font-size: 0.82rem; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .run-num { font-size: 0.75rem; color: #8b949e; }
+  .run-date { font-size: 0.75rem; color: #8b949e; white-space: nowrap; }
+
+  /* Toast */
+  #toast { position: fixed; bottom: 24px; right: 24px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px 18px; font-size: 0.88rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; max-width: 320px; }
+  #toast.show { opacity: 1; }
+
+  .live-link { color: #58a6ff; text-decoration: none; font-size: 0.88rem; }
+  .live-link:hover { text-decoration: underline; }
+  .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #30363d; border-top-color: #58a6ff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<h1>🏪 Bruktbutikk Dashboard</h1>
+<p class="subtitle">Deploy og bygg-status for <strong>hansarne-lang/bruktbutikk</strong></p>
+
+<!-- TOKEN SETUP -->
+<div class="card" id="setup-card">
+  <div class="card-title">GitHub Personal Access Token</div>
+  <input type="password" id="token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+  <small>Krever scope: <code>repo</code> og <code>workflow</code>.
+    <a class="live-link" href="https://github.com/settings/tokens/new?scopes=repo,workflow&description=Bruktbutikk+Dashboard" target="_blank">Lag token her →</a>
+  </small>
+  <button class="btn btn-primary" onclick="saveToken()">Lagre og koble til</button>
+  <button class="btn btn-danger" style="margin-left:8px" onclick="clearToken()" id="clear-btn" style="display:none">Fjern token</button>
+</div>
+
+<!-- STATUS -->
+<div class="card" id="status-card" style="display:none">
+  <div class="card-title">Siste bygg</div>
+  <div class="status-row">
+    <span class="badge unknown" id="status-badge"><span class="pulse"></span> Laster…</span>
+    <div>
+      <div class="status-msg" id="status-msg">—</div>
+      <div class="status-meta" id="status-meta">—</div>
+    </div>
+  </div>
+  <div style="margin-top:12px; display:flex; gap:16px; align-items:center;">
+    <a class="live-link" href="https://hansarne-lang.github.io/bruktbutikk/" target="_blank">🎮 Åpne spillet →</a>
+    <a class="live-link" href="https://github.com/hansarne-lang/bruktbutikk/actions" target="_blank">⚙️ GitHub Actions →</a>
+    <button class="btn btn-secondary" style="margin-left:auto" onclick="refresh()">↻ Oppdater</button>
+  </div>
+</div>
+
+<!-- DEPLOY -->
+<div class="card" id="deploy-card" style="display:none">
+  <div class="card-title">Manuell deploy</div>
+  <input type="text" id="deploy-msg" placeholder="Beskriv hva som er endret (valgfritt)" value="">
+  <div class="btn-row">
+    <button class="btn btn-primary" id="deploy-btn" onclick="triggerDeploy()">🚀 Deploy til GitHub Pages</button>
+  </div>
+  <div id="deploy-feedback" style="margin-top:10px; font-size:0.82rem; color:#8b949e;"></div>
+</div>
+
+<!-- BYGG-HISTORIKK -->
+<div class="card" id="runs-card" style="display:none">
+  <div class="card-title">Bygg-historikk</div>
+  <div id="runs-list"><span class="spinner"></span> Laster…</div>
+</div>
+
+<!-- COMMIT-HISTORIKK -->
+<div class="card" id="commits-card" style="display:none">
+  <div class="card-title">Siste commits</div>
+  <div id="commits-list"><span class="spinner"></span> Laster…</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const OWNER = 'hansarne-lang';
+const REPO  = 'bruktbutikk';
+const WORKFLOW_FILE = 'ci.yml';
+
+let token = localStorage.getItem('bb_token') || '';
+
+function api(path, opts = {}) {
+  return fetch(`https://api.github.com${path}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+    ...opts
+  });
+}
+
+function toast(msg, ok = true) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.borderColor = ok ? '#238636' : '#f85149';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function saveToken() {
+  const val = document.getElementById('token-input').value.trim();
+  if (!val) return toast('Lim inn et gyldig token', false);
+  token = val;
+  localStorage.setItem('bb_token', token);
+  showDashboard();
+}
+
+function clearToken() {
+  localStorage.removeItem('bb_token');
+  token = '';
+  document.getElementById('token-input').value = '';
+  hideDashboard();
+}
+
+function showDashboard() {
+  document.getElementById('token-input').value = '';
+  ['status-card','deploy-card','runs-card','commits-card'].forEach(id => {
+    document.getElementById(id).style.display = '';
+  });
+  document.getElementById('clear-btn').style.display = 'inline-block';
+  refresh();
+}
+
+function hideDashboard() {
+  ['status-card','deploy-card','runs-card','commits-card'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+}
+
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString('no-NO', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+
+function statusBadge(status, conclusion) {
+  if (status === 'in_progress' || status === 'queued') return ['in_progress', '⟳ Pågår'];
+  if (conclusion === 'success')  return ['success',  '✓ Bestått'];
+  if (conclusion === 'failure')  return ['failure',  '✗ Feilet'];
+  return ['unknown', '? Ukjent'];
+}
+
+async function loadStatus() {
+  const r = await api(`/repos/${OWNER}/${REPO}/actions/runs?per_page=1`);
+  if (!r.ok) { toast('Kunne ikke hente status – sjekk token', false); return; }
+  const data = await r.json();
+  const run = data.workflow_runs[0];
+  if (!run) return;
+  const [cls, label] = statusBadge(run.status, run.conclusion);
+  const badge = document.getElementById('status-badge');
+  badge.className = `badge ${cls}`;
+  badge.innerHTML = (cls === 'in_progress' ? '<span class="pulse"></span>' : '') + label;
+  document.getElementById('status-msg').textContent = run.display_title;
+  document.getElementById('status-meta').textContent = `#${run.run_number} · ${fmtDate(run.created_at)}`;
+}
+
+async function loadRuns() {
+  const r = await api(`/repos/${OWNER}/${REPO}/actions/runs?per_page=8`);
+  if (!r.ok) return;
+  const data = await r.json();
+  const list = document.getElementById('runs-list');
+  list.innerHTML = data.workflow_runs.map(run => {
+    const [cls, label] = statusBadge(run.status, run.conclusion);
+    return `<div class="run">
+      <span class="badge ${cls}" style="font-size:0.72rem;padding:2px 8px">${label}</span>
+      <span class="run-num">#${run.run_number}</span>
+      <span class="run-name" title="${run.display_title}">${run.display_title}</span>
+      <span class="run-date">${fmtDate(run.created_at)}</span>
+      <a class="live-link" href="${run.html_url}" target="_blank" style="font-size:0.75rem">↗</a>
+    </div>`;
+  }).join('');
+}
+
+async function loadCommits() {
+  const r = await api(`/repos/${OWNER}/${REPO}/commits?per_page=6`);
+  if (!r.ok) return;
+  const data = await r.json();
+  const list = document.getElementById('commits-list');
+  list.innerHTML = data.map(c => `<div class="commit">
+    <a class="commit-sha live-link" href="${c.html_url}" target="_blank">${c.sha.slice(0,7)}</a>
+    <span class="commit-msg">${c.commit.message.split('\n')[0]}</span>
+    <span class="commit-date">${fmtDate(c.commit.author.date)}</span>
+  </div>`).join('');
+}
+
+async function triggerDeploy() {
+  const msg = document.getElementById('deploy-msg').value.trim() || 'Manuell deploy';
+  const btn = document.getElementById('deploy-btn');
+  const fb  = document.getElementById('deploy-feedback');
+  btn.disabled = true;
+  fb.innerHTML = '<span class="spinner"></span> Starter bygg…';
+
+  const r = await api(`/repos/${OWNER}/${REPO}/actions/workflows/${WORKFLOW_FILE}/dispatches`, {
+    method: 'POST',
+    body: JSON.stringify({ ref: 'main', inputs: { message: msg } })
+  });
+
+  if (r.status === 204) {
+    toast('✅ Bygg startet!');
+    fb.textContent = '✅ Bygg startet – oppdaterer om 5 sek…';
+    setTimeout(() => { refresh(); btn.disabled = false; fb.textContent = ''; }, 5000);
+  } else {
+    const err = await r.json().catch(() => ({}));
+    toast('Feil: ' + (err.message || r.status), false);
+    fb.textContent = '❌ ' + (err.message || 'Noe gikk galt');
+    btn.disabled = false;
+  }
+}
+
+function refresh() {
+  loadStatus();
+  loadRuns();
+  loadCommits();
+}
+
+// Auto-oppdater hvert 30 sek
+setInterval(() => { if (token) refresh(); }, 30000);
+
+// Init
+if (token) {
+  document.getElementById('token-input').placeholder = '(token lagret)';
+  showDashboard();
+}
+</script>
+</body>
+</html>

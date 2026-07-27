@@ -5,6 +5,12 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'Frivillig melding'
+        required: false
+        default: 'Manuell deploy'
 
 permissions:
   contents: read

@@ -55,7 +55,7 @@ theme_override_font_sizes/font_size = 15
 custom_minimum_size = Vector2(110, 0)
 
 [node name="CapacityLabel" type="Label" parent="UI/HUD"]
-text = "📦 Lager: 0/100"
+text = "Lager: 0/100"
 theme_override_font_sizes/font_size = 15
 custom_minimum_size = Vector2(140, 0)
 
@@ -63,13 +63,13 @@ custom_minimum_size = Vector2(140, 0)
 text = "Åpne butikk"
 
 [node name="CleanupButton" type="Button" parent="UI/HUD"]
-text = "🚐 Rydde oppdrag"
+text = "Rydde oppdrag"
 
 [node name="ArtRoomButton" type="Button" parent="UI/HUD"]
-text = "🎨 Sprite-rom"
+text = "Sprite-rom"
 
 [node name="HomeButton" type="Button" parent="UI/HUD"]
-text = "🏠 Til huset"
+text = "Til huset"
 
 [node name="MainMenuButton" type="Button" parent="UI/HUD"]
 text = "Hovedmeny"
@@ -101,7 +101,7 @@ visible = false
 theme_override_constants/separation = 6
 
 [node name="WBTitle" type="Label" parent="UI/WorkbenchPanel/WorkbenchVBox"]
-text = "⚒ Arbeidsbord"
+text = "Arbeidsbord"
 theme_override_font_sizes/font_size = 15
 
 [node name="WBItemName" type="Label" parent="UI/WorkbenchPanel/WorkbenchVBox"]
@@ -125,7 +125,7 @@ text = "Plasser på hylle"
 [node name="WBSeparator" type="HSeparator" parent="UI/WorkbenchPanel/WorkbenchVBox"]
 
 [node name="WBSetTitle" type="Label" parent="UI/WorkbenchPanel/WorkbenchVBox"]
-text = "🎮 Sett-kombinering"
+text = "Sett-kombinering"
 theme_override_font_sizes/font_size = 13
 
 [node name="WBSetStatus" type="Label" parent="UI/WorkbenchPanel/WorkbenchVBox"]
@@ -137,7 +137,7 @@ text = "Sett sammen sett"
 disabled = true
 
 [node name="WBHomeButton" type="Button" parent="UI/WorkbenchPanel/WorkbenchVBox"]
-text = "🏠 Ta med hjem"
+text = "Ta med hjem"
 visible = false
 
 [node name="WBCloseButton" type="Button" parent="UI/WorkbenchPanel/WorkbenchVBox"]

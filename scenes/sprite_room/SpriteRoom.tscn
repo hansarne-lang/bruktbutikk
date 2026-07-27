@@ -47,7 +47,7 @@ position = Vector2(10, 8)
 theme_override_constants/separation = 20
 
 [node name="TitleLabel" type="Label" parent="UI/HUD"]
-text = "🎨 Sprite-rom"
+text = "Sprite-rom"
 theme_override_font_sizes/font_size = 16
 
 [node name="BackButton" type="Button" parent="UI/HUD"]

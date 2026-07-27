@@ -8,21 +8,21 @@ const PILLAR_W  := 14
 
 const SECTIONS := [
 	{
-		"label": "🛋  STUE",
+		"label": "STUE",
 		"x": 10, "w": 280,
 		"wall":  Color(0.22, 0.15, 0.09),
 		"floor": Color(0.42, 0.30, 0.16),
 		"trim":  Color(0.32, 0.22, 0.10),
 	},
 	{
-		"label": "🛏  SOVEROM",
+		"label": "SOVEROM",
 		"x": 304, "w": 280,
 		"wall":  Color(0.14, 0.17, 0.24),
 		"floor": Color(0.28, 0.24, 0.34),
 		"trim":  Color(0.22, 0.18, 0.30),
 	},
 	{
-		"label": "🍳  KJØKKEN",
+		"label": "KJOKKEN",
 		"x": 598, "w": 280,
 		"wall":  Color(0.20, 0.22, 0.18),
 		"floor": Color(0.44, 0.40, 0.36),

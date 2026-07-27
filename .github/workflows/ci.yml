@@ -78,7 +78,11 @@ jobs:
       - name: Importer prosjekt (bygg .godot-cache)
         run: |
           timeout 90 godot --headless --quit --path . 2>&1 || true
-          echo "✅ Import ferdig"
+          echo "Import ferdig"
+          # Slett CSV import-filer slik at råfiler er tilgjengelig via FileAccess i eksport
+          rm -f data/items.csv.import data/rooms.csv.import data/characters.csv.import \
+                data/settings.csv.import data/sets.csv.import
+          echo "CSV import-filer fjernet – FileAccess vil bruke råfiler"
 
       - name: Eksporter til Web (HTML5)
         run: |

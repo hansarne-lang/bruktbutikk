@@ -89,10 +89,17 @@ func repair() -> bool:
 func to_dict() -> Dictionary:
 	return {
 		"id": id, "name": name, "category": category,
+		"description": description, "set_id": set_id,
 		"condition_value": condition_value,
+		"base_buy_price": base_buy_price,
+		"base_sell_price": base_sell_price,
+		"wash_cost": wash_cost,
+		"wash_condition_gain": wash_condition_gain,
+		"repair_cost": repair_cost,
+		"repair_condition_gain": repair_condition_gain,
+		"max_condition": max_condition,
 		"is_washed": is_washed, "is_repaired": is_repaired,
 		"is_on_shelf": is_on_shelf, "is_sold": is_sold,
-		"set_id": set_id
 	}
 
 static func from_dict(d: Dictionary) -> ItemData:
@@ -100,10 +107,18 @@ static func from_dict(d: Dictionary) -> ItemData:
 	item.id = d.get("id", "")
 	item.name = d.get("name", "")
 	item.category = d.get("category", "")
+	item.description = d.get("description", "")
+	item.set_id = d.get("set_id", "")
 	item.condition_value = d.get("condition_value", 50)
+	item.base_buy_price = d.get("base_buy_price", 0)
+	item.base_sell_price = d.get("base_sell_price", 0)
+	item.wash_cost = d.get("wash_cost", 0)
+	item.wash_condition_gain = d.get("wash_condition_gain", 10)
+	item.repair_cost = d.get("repair_cost", 0)
+	item.repair_condition_gain = d.get("repair_condition_gain", 20)
+	item.max_condition = d.get("max_condition", 100)
 	item.is_washed = d.get("is_washed", false)
 	item.is_repaired = d.get("is_repaired", false)
 	item.is_on_shelf = d.get("is_on_shelf", false)
 	item.is_sold = d.get("is_sold", false)
-	item.set_id = d.get("set_id", "")
 	return item

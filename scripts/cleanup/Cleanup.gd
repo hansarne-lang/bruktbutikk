@@ -71,7 +71,7 @@ const ROOM_SECTIONS := [
 func _ready() -> void:
 	var data := SaveManager.game_data
 	day_label.text      = "Dag %d" % data.get("day", 1)
-	location_label.text = "📍 %s" % data.get("current_location", "Ukjent adresse")
+	location_label.text = data.get("current_location", "Ukjent adresse")
 
 	$UI/HUD/ShopButton.pressed.connect(_on_go_shop)
 	$UI/HUD/MainMenuButton.pressed.connect(_on_main_menu)
@@ -155,11 +155,11 @@ func _make_item(id: String) -> ItemData:
 # ── Prisantydning ─────────────────────────────────────────────
 func _value_hint(item: ItemData) -> String:
 	var v := item.condition_value
-	if v >= 80:   return "✨ Ser svært verdifull ut!"
-	elif v >= 62: return "👍 Ganske fin stand"
-	elif v >= 45: return "😐 Middels – litt bruk og slit"
-	elif v >= 25: return "😕 Nokså slitt og medtatt"
-	else:          return "😬 Veldig dårlig stand"
+	if v >= 80:   return "Ser svært verdifull ut!"
+	elif v >= 62: return "Ganske fin stand"
+	elif v >= 45: return "Middels – litt bruk og slit"
+	elif v >= 25: return "Nokså slitt og medtatt"
+	else:          return "Veldig dårlig stand"
 
 # ── Klikk ────────────────────────────────────────────────────
 func _on_item_clicked(_vp, event, _shape, item: ItemData) -> void:
@@ -198,7 +198,7 @@ func _on_throw_item() -> void:
 	current_item.is_sold = true
 	_tint_sprite(current_item.id, Color(1.0, 0.30, 0.30, 0.55))
 	item_panel.visible = false
-	_set_status("🗑 %s ble kastet." % current_item.name)
+	_set_status("%s ble kastet." % current_item.name)
 	_check_room_cleared()
 
 func _tint_sprite(id: String, col: Color) -> void:
@@ -228,7 +228,7 @@ func _on_drive_to_shop() -> void:
 		item.is_on_shelf = false
 		inventory.append(item.to_dict())
 	SaveManager.game_data["inventory"] = inventory
-	_set_status("✅ %d ting levert til butikken!" % car_items.size())
+	_set_status("%d ting levert til butikken!" % car_items.size())
 	car_items.clear()
 	car_load = 0
 	_update_car_ui()
@@ -240,7 +240,7 @@ func _on_drive_to_dump() -> void:
 		_set_status("Bilen er tom.")
 		return
 	SoundManager.play("item_throw")
-	_set_status("🗑 %d ting kjørt til søppelplassen." % car_items.size())
+	_set_status("%d ting kjørt til søppelplassen." % car_items.size())
 	car_items.clear()
 	car_load = 0
 	_update_car_ui()

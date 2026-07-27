@@ -23,7 +23,7 @@ position = Vector2(10, 8)
 theme_override_constants/separation = 20
 
 [node name="LocationLabel" type="Label" parent="UI/HUD"]
-text = "📍 Laster..."
+text = "Laster..."
 theme_override_font_sizes/font_size = 15
 custom_minimum_size = Vector2(300, 0)
 
@@ -32,7 +32,7 @@ text = "Dag 1"
 theme_override_font_sizes/font_size = 15
 
 [node name="ShopButton" type="Button" parent="UI/HUD"]
-text = "🏪 Til butikken"
+text = "Til butikken"
 
 [node name="MainMenuButton" type="Button" parent="UI/HUD"]
 text = "Hovedmeny"
@@ -45,7 +45,7 @@ size = Vector2(360, 250)
 theme_override_constants/separation = 10
 
 [node name="CarTitle" type="Label" parent="UI/CarPanel/CarVBox"]
-text = "🚐 Bilen"
+text = "Bilen"
 theme_override_font_sizes/font_size = 14
 
 [node name="CarCapacityLabel" type="Label" parent="UI/CarPanel/CarVBox"]
@@ -63,11 +63,11 @@ custom_minimum_size = Vector2(320, 100)
 theme_override_constants/separation = 8
 
 [node name="DriveShopButton" type="Button" parent="UI/CarPanel/CarVBox/CarButtons"]
-text = "🏪 Kjør til butikk"
+text = "Kjor til butikk"
 custom_minimum_size = Vector2(150, 35)
 
 [node name="DriveDumpButton" type="Button" parent="UI/CarPanel/CarVBox/CarButtons"]
-text = "🗑 Kjør til søppelplass"
+text = "Kjoer til soeppelplass"
 custom_minimum_size = Vector2(160, 35)
 
 [node name="ItemPanel" type="PanelContainer" parent="UI"]
@@ -99,11 +99,11 @@ autowrap_mode = 3
 theme_override_constants/separation = 8
 
 [node name="TakeButton" type="Button" parent="UI/ItemPanel/ItemVBox/ItemButtons"]
-text = "📦 Legg i bil"
+text = "Legg i bil"
 custom_minimum_size = Vector2(150, 35)
 
 [node name="ThrowButton" type="Button" parent="UI/ItemPanel/ItemVBox/ItemButtons"]
-text = "🗑 Kast"
+text = "Kast"
 custom_minimum_size = Vector2(150, 35)
 
 [node name="CloseItemButton" type="Button" parent="UI/ItemPanel/ItemVBox"]
@@ -125,7 +125,7 @@ visible = false
 theme_override_constants/separation = 10
 
 [node name="RoomClearedLabel" type="Label" parent="UI/RoomClearedPanel/RoomClearedVBox"]
-text = "✅ Rommet er ryddet!"
+text = "Rommet er ryddet!"
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 18
 

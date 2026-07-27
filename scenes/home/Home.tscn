@@ -69,7 +69,7 @@ text = "Dag 1 – Kveld"
 theme_override_font_sizes/font_size = 16
 
 [node name="ShopButton" type="Button" parent="UI/HUD"]
-text = "🏪 Til butikken"
+text = "Til butikken"
 
 [node name="MainMenuButton" type="Button" parent="UI/HUD"]
 text = "Hovedmeny"

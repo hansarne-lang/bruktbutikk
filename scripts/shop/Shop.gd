@@ -63,7 +63,7 @@ func _spawn_shop_deco() -> void:
 		var s := FS.new()
 		s.position = Vector2(d[1], d[2])
 		s.setup(d[0], Vector2(d[3], d[4]))
-		s.z_index = -1
+		s.z_index = 1
 		add_child(s)
 
 # ── HUD ──────────────────────────────────────────────────────
@@ -73,7 +73,7 @@ func _update_hud() -> void:
 	money_label.text    = "%s kr" % _fmt(data.get("money", 0))
 	open_close_btn.text = "Lukk butikk" if is_open else "Åpne butikk"
 	var used := inventory.size()
-	capacity_label.text = "📦 Lager: %d/%d" % [used, SHOP_CAPACITY]
+	capacity_label.text = "Lager: %d/%d" % [used, SHOP_CAPACITY]
 	# Rød farge når nesten full
 	if used >= SHOP_CAPACITY:
 		capacity_label.add_theme_color_override("font_color", Color(1, 0.3, 0.3))
@@ -133,7 +133,7 @@ func _run_daily_sales() -> void:
 func _show_sales_report(count: int, earned: int) -> void:
 	# Vis enkel popup i HUD
 	var lbl := Label.new()
-	lbl.text = "🏷 %d vare(r) solgt i dag – inntekt: %s kr" % [count, _fmt(earned)]
+	lbl.text = "%d vare(r) solgt i dag – inntekt: %s kr" % [count, _fmt(earned)]
 	lbl.add_theme_font_size_override("font_size", 16)
 	lbl.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
 	lbl.position = Vector2(10, 35)
@@ -233,7 +233,7 @@ func _refresh_workbench_ui() -> void:
 		wb_home_btn.visible = is_homeable
 		if is_homeable:
 			var already : bool = SaveManager.game_data.get("home_computer", false)
-			wb_home_btn.text = ("🏠 Allerede hjemme – erstatt?" if already else "🏠 Ta med hjem")
+			wb_home_btn.text = ("Allerede hjemme – erstatt?" if already else "Ta med hjem")
 	else:
 		wb_item_name.text  = "%d varer valgt" % selected.size()
 		wb_condition.text  = ""
@@ -277,7 +277,7 @@ func _check_set_match() -> void:
 		var base_val: int = 0
 		for si2 in selected: base_val += si2.sell_price
 		var set_val: int = int(base_val * best_bonus)
-		wb_set_status.text = "🎉 %s\nVerdi: %s kr (×%.1f bonus!)" % [best_name, _fmt(set_val), best_bonus]
+		wb_set_status.text = "%s\nVerdi: %s kr (x%.1f bonus!)" % [best_name, _fmt(set_val), best_bonus]
 		wb_combine_btn.disabled = false
 		wb_combine_btn.set_meta("set_id",    best_set_id)
 		wb_combine_btn.set_meta("set_name",  best_name)

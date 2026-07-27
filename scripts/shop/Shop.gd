@@ -71,9 +71,52 @@ func _on_open_close() -> void:
 	is_open = !is_open
 	_update_hud()
 	if not is_open:
+		_run_daily_sales()
 		SaveManager.game_data["day"] = SaveManager.game_data.get("day", 1) + 1
 		SaveManager.save_game()
 		_update_hud()
+
+# ── Daglig salg ───────────────────────────────────────────────
+func _run_daily_sales() -> void:
+	var sold_count : int = 0
+	var earned     : int = 0
+	var to_remove  : Array[ItemData] = []
+
+	for item in inventory:
+		if not item.is_on_shelf or item.is_sold:
+			continue
+		# Sjanse for salg basert på tilstand (God/Utmerket selger lettere)
+		var sell_chance : float = 0.3 + item.condition_value / 200.0  # 0.35–0.8
+		if randf() < sell_chance:
+			# Kunden byr 85–110 % av salgspris
+			var factor     : float = randf_range(0.85, 1.10)
+			var final_price: int   = int(item.sell_price * factor)
+			earned    += final_price
+			sold_count += 1
+			item.is_sold = true
+			to_remove.append(item)
+
+	for item in to_remove:
+		inventory.erase(item)
+
+	SaveManager.game_data["money"] = SaveManager.game_data.get("money", 0) + earned
+	_save_inventory()
+	_refresh_inventory_ui()
+
+	if sold_count > 0:
+		_show_sales_report(sold_count, earned)
+
+func _show_sales_report(count: int, earned: int) -> void:
+	# Vis enkel popup i HUD
+	var lbl := Label.new()
+	lbl.text = "🏷 %d vare(r) solgt i dag – inntekt: %s kr" % [count, _fmt(earned)]
+	lbl.add_theme_font_size_override("font_size", 16)
+	lbl.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
+	lbl.position = Vector2(10, 35)
+	$UI.add_child(lbl)
+	# Fjern etter 4 sekunder
+	await get_tree().create_timer(4.0).timeout
+	lbl.queue_free()
 
 # ── Lager ────────────────────────────────────────────────────
 func _load_inventory() -> void:
@@ -138,7 +181,8 @@ func _on_item_selected(item: ItemData) -> void:
 
 func _close_workbench() -> void:
 	selected.clear()
-	wb_panel.visible = false
+	wb_panel.visible    = false
+	wb_home_btn.visible = false
 	_refresh_inventory_ui()
 
 func _refresh_workbench_ui() -> void:

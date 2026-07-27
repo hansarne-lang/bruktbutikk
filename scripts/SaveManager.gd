@@ -33,5 +33,11 @@ func load_game() -> bool:
 	if result == null:
 		return false
 	game_data = result
+	# ── Migrasjon: fyll inn felt som mangler i eldre saves ────
+	if not game_data.has("home_computer"): game_data["home_computer"] = false
+	if not game_data.has("home_items"):    game_data["home_items"]    = []
+	if not game_data.has("inventory"):     game_data["inventory"]     = []
+	if not game_data.has("money"):         game_data["money"]         = 5000
+	if not game_data.has("day"):           game_data["day"]           = 1
 	print("Spill lastet inn.")
 	return true

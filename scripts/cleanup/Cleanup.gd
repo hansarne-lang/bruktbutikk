@@ -55,7 +55,10 @@ func _ready() -> void:
 
 # ── Spawn gjenstander ─────────────────────────────────────────
 func _spawn_room_items() -> void:
-	for layout in ROOM_LAYOUT:
+	# Bland rekkefølgen slik at kassetten ikke alltid er synlig fra start
+	var layouts := ROOM_LAYOUT.duplicate()
+	layouts.shuffle()
+	for layout in layouts:
 		var item := _make_item(layout[0])
 		room_items.append(item)
 

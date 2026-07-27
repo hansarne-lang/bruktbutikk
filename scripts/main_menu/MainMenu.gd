@@ -23,8 +23,13 @@ func _on_new_game_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/shop/Shop.tscn")
 
 func _on_load_pressed() -> void:
-	# TODO: Åpne last inn-dialog
-	pass
+	if SaveManager.load_game():
+		get_tree().change_scene_to_file("res://scenes/shop/Shop.tscn")
+	else:
+		# Vis feilmelding hvis ingen lagret spill
+		load_button.text = "Ingen lagret spill!"
+		await get_tree().create_timer(2.0).timeout
+		load_button.text = "Last inn spill"
 
 func _on_save_pressed() -> void:
 	SaveManager.save_game()

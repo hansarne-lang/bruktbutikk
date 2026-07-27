@@ -161,10 +161,10 @@ func _make_seq(tones: Array) -> AudioStreamWAV:
 
 func _make_player(stream: AudioStreamWAV, vol_db: float = 0.0) -> AudioStreamPlayer:
 	var p := AudioStreamPlayer.new()
-	p.stream         = stream
-	p.volume_db      = vol_db
-	p.bus            = "Master"
-	p.autoplay       = false
+	p.stream    = stream
+	p.volume_db = vol_db
+	p.bus       = "Master"
+	p.autoplay  = false
 	add_child(p)
 	return p
 

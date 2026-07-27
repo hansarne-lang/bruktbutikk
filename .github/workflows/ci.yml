@@ -69,6 +69,11 @@ jobs:
           unzip -q Godot_v4.7.1-stable_export_templates.tpz -d /tmp/tpl
           mv /tmp/tpl/templates/* ~/.local/share/godot/export_templates/4.7.1.stable/
 
+      - name: Importer prosjekt (bygg .godot-cache)
+        run: |
+          timeout 90 godot --headless --quit --path . 2>&1 || true
+          echo "✅ Import ferdig"
+
       - name: Eksporter til Web (HTML5)
         run: |
           mkdir -p export/web

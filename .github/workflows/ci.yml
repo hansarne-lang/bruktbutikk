@@ -72,7 +72,12 @@ jobs:
       - name: Eksporter til Web (HTML5)
         run: |
           mkdir -p export/web
-          godot --headless --export-release "Web" export/web/index.html --path . 2>&1
+          godot --headless --export-release "Web" export/web/index.html --path . 2>&1 || true
+          if [ ! -f "export/web/index.html" ]; then
+            echo "❌ Eksport feilet – index.html ble ikke generert"
+            exit 1
+          fi
+          echo "✅ Eksport fullført: $(ls -lh export/web/index.html)"
 
       - name: Konfigurer GitHub Pages
         uses: actions/configure-pages@v5

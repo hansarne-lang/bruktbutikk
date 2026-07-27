@@ -1,9 +1,12 @@
 extends Node2D
 ## Del 2: Rydding av dødsbo
+## Tre rom side om side: stue, soverom, kjøkken.
 ## Klikk på gjenstander, vurder om de skal i bilen eller kastes.
-## Bilen har begrenset kapasitet – kjør til butikk eller søppelplass.
 
 const CAR_CAPACITY := 10
+
+const FurnitureSprite = preload("res://scripts/cleanup/FurnitureSprite.gd")
+const RoomBackground  = preload("res://scripts/cleanup/RoomBackground.gd")
 
 @onready var location_label   : Label         = $UI/HUD/LocationLabel
 @onready var day_label        : Label         = $UI/HUD/DayLabel
@@ -22,19 +25,47 @@ const CAR_CAPACITY := 10
 @onready var room_cleared_panel               = $UI/RoomClearedPanel
 @onready var items_node                       = $Items
 
-var current_item : ItemData = null
-var car_items    : Array[ItemData] = []
-var car_load     : int = 0
-var room_items   : Array[ItemData] = []
+var current_item  : ItemData = null
+var car_items     : Array[ItemData] = []
+var car_load      : int = 0
+var room_items    : Array[ItemData] = []
+var _item_sprites : Dictionary = {}   # item.id -> Node2D sprite
 
-const ROOM_LAYOUT := [
-	["sofa_01",       120, 360, 220, 110, Color(0.40, 0.18, 0.12)],
-	["table_01",      420, 390, 160,  80, Color(0.50, 0.35, 0.15)],
-	["lamp_01",       660, 300,  60, 160, Color(0.65, 0.60, 0.20)],
-	["book_lot",      820, 370, 120,  90, Color(0.25, 0.25, 0.45)],
-	["chair_01",      100, 200,  90, 120, Color(0.35, 0.20, 0.10)],
-	["wardrobe_01",   280, 150, 140, 280, Color(0.30, 0.22, 0.12)],
-	["breakout_cart", 190, 420,  55,  35, Color(0.15, 0.10, 0.35)],  # kassett bak sofaen
+# ── Rompooler ─────────────────────────────────────────────────
+# Format: [item_id, rel_x, rel_y, bredde, høyde, optional=false]
+const ROOM_SECTIONS := [
+	{
+		"label": "STUE", "x_start": 10, "opt_chance": 0.40,
+		"items": [
+			["sofa_01",    18, 320, 220,  82],
+			["lamp_01",   225, 220,  40, 135],
+			["chair_01",   18, 212,  74, 102],
+			["book_lot",  140, 360,  95,  68],
+			["breakout_cart", 52, 396, 52, 30, true],
+		],
+	},
+	{
+		"label": "SOVEROM", "x_start": 304, "opt_chance": 0.55,
+		"items": [
+			["wardrobe_01",  8,  96, 118, 268],
+			["lamp_01",    202, 240,  38, 120],
+			["chair_01",   152, 322,  70,  98],
+			["book_lot",    12, 368,  88,  64],
+			["c64_computer", 122, 364,  95,  54, true],
+			["c64_datasette", 30, 392,  72,  40, true],
+			["c64_joystick", 208, 392,  54,  36, true],
+		],
+	},
+	{
+		"label": "KJØKKEN", "x_start": 598, "opt_chance": 0.40,
+		"items": [
+			["table_01",   52, 344, 164,  62],
+			["chair_01",  172, 258,  70,  94],
+			["lamp_01",    12, 238,  38, 124],
+			["book_lot",   12, 364,  84,  62],
+			["c64_box",   200, 372,  60,  44, true],
+		],
+	},
 ]
 
 func _ready() -> void:
@@ -55,36 +86,56 @@ func _ready() -> void:
 
 # ── Spawn gjenstander ─────────────────────────────────────────
 func _spawn_room_items() -> void:
-	# Bland rekkefølgen slik at kassetten ikke alltid er synlig fra start
-	var layouts := ROOM_LAYOUT.duplicate()
-	layouts.shuffle()
-	for layout in layouts:
-		var item := _make_item(layout[0])
-		room_items.append(item)
+	# Romsbakgrunn
+	var bg := RoomBackground.new()
+	items_node.add_child(bg)
 
-		var rect := ColorRect.new()
-		rect.color    = layout[5]
-		rect.position = Vector2(layout[1], layout[2])
-		rect.size     = Vector2(layout[3], layout[4])
-		rect.set_meta("item_id", item.id)
-		items_node.add_child(rect)
+	for sec in ROOM_SECTIONS:
+		var xo : int = sec["x_start"]
 
-		var area  := Area2D.new()
-		var col   := CollisionShape2D.new()
-		var shape := RectangleShape2D.new()
-		shape.size   = rect.size
-		col.shape    = shape
-		col.position = rect.position + rect.size / 2.0
-		area.add_child(col)
-		area.input_pickable = true
-		area.input_event.connect(_on_item_clicked.bind(item, rect))
-		items_node.add_child(area)
+		for entry in sec["items"]:
+			var item_id  : String = entry[0]
+			var optional : bool   = entry.size() > 5 and entry[5] == true
+			if optional and randf() > sec["opt_chance"]:
+				continue
 
-		var lbl := Label.new()
-		lbl.text     = item.name
-		lbl.position = rect.position + Vector2(4, rect.size.y / 2.0 - 10)
-		lbl.add_theme_font_size_override("font_size", 11)
-		items_node.add_child(lbl)
+			var item := _make_item(item_id)
+			room_items.append(item)
+
+			var rel_x  : int = entry[1]
+			var rel_y  : int = entry[2]
+			var w      : int = entry[3]
+			var h      : int = entry[4]
+			var world_x := xo + rel_x
+			var world_y := rel_y
+
+			# Møbel-sprite
+			var sprite := FurnitureSprite.new()
+			sprite.position = Vector2(world_x, world_y)
+			sprite.setup(item_id, Vector2(w, h))
+			sprite.set_meta("item_id", item.id)
+			items_node.add_child(sprite)
+			_item_sprites[item.id] = sprite
+
+			# Klikk-area
+			var area  := Area2D.new()
+			var col   := CollisionShape2D.new()
+			var shape := RectangleShape2D.new()
+			shape.size   = Vector2(w, h)
+			col.shape    = shape
+			col.position = Vector2(world_x + w / 2.0, world_y + h / 2.0)
+			area.add_child(col)
+			area.input_pickable = true
+			area.input_event.connect(_on_item_clicked.bind(item))
+			items_node.add_child(area)
+
+			# Navnelapp
+			var lbl := Label.new()
+			lbl.text     = item.name
+			lbl.position = Vector2(world_x + 3, world_y + h / 2.0 - 8)
+			lbl.add_theme_font_size_override("font_size", 10)
+			lbl.add_theme_color_override("font_color", Color(1, 1, 1, 0.78))
+			items_node.add_child(lbl)
 
 func _make_item(id: String) -> ItemData:
 	var item := ItemData.new()
@@ -101,28 +152,41 @@ func _make_item(id: String) -> ItemData:
 	item.condition_value       = randi_range(10, 70)
 	return item
 
+# ── Prisantydning ─────────────────────────────────────────────
+func _value_hint(item: ItemData) -> String:
+	var v := item.condition_value
+	if v >= 80:   return "✨ Ser svært verdifull ut!"
+	elif v >= 62: return "👍 Ganske fin stand"
+	elif v >= 45: return "😐 Middels – litt bruk og slit"
+	elif v >= 25: return "😕 Nokså slitt og medtatt"
+	else:          return "😬 Veldig dårlig stand"
+
 # ── Klikk ────────────────────────────────────────────────────
-func _on_item_clicked(_vp, event, _shape, item: ItemData, _rect: ColorRect) -> void:
+func _on_item_clicked(_vp, event, _shape, item: ItemData) -> void:
 	if not event is InputEventMouseButton: return
 	if not (event as InputEventMouseButton).pressed: return
 	if item.is_sold or item.is_on_shelf: return
 
-	current_item        = item
-	item_name_lbl.text  = item.name
-	item_cond_lbl.text  = "Tilstand: %s (%d/100)" % [ItemData.condition_label(item.condition), item.condition_value]
-	item_value_lbl.text = "Anslått verdi: ca. %d kr" % item.sell_price
+	SoundManager.play("item_click")
+	current_item          = item
+	item_name_lbl.text    = item.name
+	item_cond_lbl.text    = "Tilstand: %s (%d/100)" % [
+		ItemData.condition_label(item.condition), item.condition_value
+	]
+	item_value_lbl.text  = _value_hint(item)
 	item_weight_lbl.text = "Størrelse: 1 enhet"
-	item_desc_lbl.text  = item.description
-	take_btn.disabled   = car_load >= CAR_CAPACITY
-	item_panel.visible  = true
+	item_desc_lbl.text   = item.description
+	take_btn.disabled    = car_load >= CAR_CAPACITY
+	item_panel.visible   = true
 
 # ── Legg i bil ───────────────────────────────────────────────
 func _on_take_item() -> void:
 	if not current_item or car_load >= CAR_CAPACITY: return
+	SoundManager.play("item_take")
 	current_item.is_on_shelf = true
 	car_items.append(current_item)
 	car_load += 1
-	_dim_item(current_item, Color(0.2, 0.5, 0.2, 0.6))
+	_tint_sprite(current_item.id, Color(0.30, 1.0, 0.30, 0.62))
 	_update_car_ui()
 	item_panel.visible = false
 	_check_room_cleared()
@@ -130,16 +194,16 @@ func _on_take_item() -> void:
 # ── Kast ─────────────────────────────────────────────────────
 func _on_throw_item() -> void:
 	if not current_item: return
+	SoundManager.play("item_throw")
 	current_item.is_sold = true
-	_dim_item(current_item, Color(0.4, 0.1, 0.1, 0.6))
+	_tint_sprite(current_item.id, Color(1.0, 0.30, 0.30, 0.55))
 	item_panel.visible = false
 	_set_status("🗑 %s ble kastet." % current_item.name)
 	_check_room_cleared()
 
-func _dim_item(item: ItemData, tint: Color) -> void:
-	for child in items_node.get_children():
-		if child is ColorRect and child.get_meta("item_id", "") == item.id:
-			child.color = tint
+func _tint_sprite(id: String, col: Color) -> void:
+	if id in _item_sprites:
+		_item_sprites[id].modulate = col
 
 # ── Bil UI ───────────────────────────────────────────────────
 func _update_car_ui() -> void:
@@ -158,6 +222,7 @@ func _on_drive_to_shop() -> void:
 	if car_items.is_empty():
 		_set_status("Bilen er tom – legg noe i den først.")
 		return
+	SoundManager.play("door_open")
 	var inventory : Array = SaveManager.game_data.get("inventory", [])
 	for item in car_items:
 		item.is_on_shelf = false
@@ -174,6 +239,7 @@ func _on_drive_to_dump() -> void:
 	if car_items.is_empty():
 		_set_status("Bilen er tom.")
 		return
+	SoundManager.play("item_throw")
 	_set_status("🗑 %d ting kjørt til søppelplassen." % car_items.size())
 	car_items.clear()
 	car_load = 0

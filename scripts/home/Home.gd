@@ -34,6 +34,7 @@ func _ready() -> void:
 
 	has_computer = SaveManager.game_data.get("home_computer", false)
 	home_computer.visible = has_computer
+	_spawn_home_furniture()
 
 	if has_computer:
 		_print_to_terminal("    **** COMMODORE 64 BASIC V2 ****")
@@ -42,6 +43,24 @@ func _ready() -> void:
 		_print_to_terminal("")
 		_print_to_terminal("SKRIV HELP FOR KOMMANDOLISTE")
 		_print_to_terminal("")
+
+# ── Hjemmemøbler ─────────────────────────────────────────────
+func _spawn_home_furniture() -> void:
+	var FS := preload("res://scripts/cleanup/FurnitureSprite.gd")
+	# [id, x, y, w, h]
+	var deco := [
+		["sofa_01",    270, 395, 240,  88],
+		["lamp_01",    540, 272,  44, 148],
+		["table_01",   620, 432, 185,  66],
+		["book_lot",   155, 382, 100,  74],
+		["wardrobe_01", 900, 170, 100, 270],
+	]
+	for d in deco:
+		var s := FS.new()
+		s.position = Vector2(d[1], d[2])
+		s.setup(d[0], Vector2(d[3], d[4]))
+		s.z_index = -1
+		add_child(s)
 
 # ── Bevegelse ─────────────────────────────────────────────────
 func _process(delta: float) -> void:

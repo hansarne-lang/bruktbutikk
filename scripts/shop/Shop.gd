@@ -39,9 +39,32 @@ func _ready() -> void:
 	_load_inventory()
 	_update_hud()
 	_refresh_inventory_ui()
+	_spawn_shop_deco()
 
 	if inventory.is_empty():
 		_add_test_items()
+
+# ── Butikkdekorasjon ─────────────────────────────────────────
+func _spawn_shop_deco() -> void:
+	var FS := preload("res://scripts/cleanup/FurnitureSprite.gd")
+	# Bakgrunnsmøbler som vises i butikklokalet
+	var deco := [
+		["wardrobe_01",  30, 130, 100, 240],
+		["wardrobe_01", 150, 130, 100, 240],
+		["lamp_01",     280, 140,  38, 200],
+		["sofa_01",      40, 430, 220,  80],
+		["table_01",    350, 440, 170,  58],
+		["chair_01",    560, 390,  68,  98],
+		["lamp_01",     660, 200,  38, 200],
+		["book_lot",    700, 440,  90,  58],
+		["wardrobe_01", 760, 130, 100, 240],
+	]
+	for d in deco:
+		var s := FS.new()
+		s.position = Vector2(d[1], d[2])
+		s.setup(d[0], Vector2(d[3], d[4]))
+		s.z_index = -1
+		add_child(s)
 
 # ── HUD ──────────────────────────────────────────────────────
 func _update_hud() -> void:
@@ -104,6 +127,7 @@ func _run_daily_sales() -> void:
 	_refresh_inventory_ui()
 
 	if sold_count > 0:
+		SoundManager.play("kaching")
 		_show_sales_report(sold_count, earned)
 
 func _show_sales_report(count: int, earned: int) -> void:
@@ -175,6 +199,7 @@ func _on_item_selected(item: ItemData) -> void:
 		selected.erase(item)
 	else:
 		selected.append(item)
+	SoundManager.play("item_click")
 	wb_panel.visible = true
 	_refresh_workbench_ui()
 	_refresh_inventory_ui()
@@ -263,6 +288,7 @@ func _check_set_match() -> void:
 
 # ── Kombiner sett ────────────────────────────────────────────
 func _on_combine_set() -> void:
+	SoundManager.play("combine")
 	var set_name  : String = wb_combine_btn.get_meta("set_name",  "Sett")
 	var set_value : int    = wb_combine_btn.get_meta("set_value", 0)
 
@@ -308,6 +334,7 @@ func _on_wash() -> void:
 	var money : int = SaveManager.game_data.get("money", 0)
 	if money < item.wash_cost:
 		wb_condition.text = "Ikke nok penger!"; return
+	SoundManager.play("wash")
 	SaveManager.game_data["money"] = money - item.wash_cost
 	item.wash()
 	_save_inventory(); _update_hud(); _refresh_workbench_ui(); _refresh_inventory_ui()
@@ -318,6 +345,7 @@ func _on_repair() -> void:
 	var money : int = SaveManager.game_data.get("money", 0)
 	if money < item.repair_cost:
 		wb_condition.text = "Ikke nok penger!"; return
+	SoundManager.play("repair")
 	SaveManager.game_data["money"] = money - item.repair_cost
 	item.repair()
 	_save_inventory(); _update_hud(); _refresh_workbench_ui(); _refresh_inventory_ui()
@@ -325,6 +353,7 @@ func _on_repair() -> void:
 func _on_place_on_shelf() -> void:
 	var item := selected[0] if selected.size() == 1 else null
 	if not item: return
+	SoundManager.play("shelf")
 	item.is_on_shelf = true
 	_save_inventory()
 	selected.clear()

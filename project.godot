@@ -24,6 +24,7 @@ config/icon="res://assets/images/icon.svg"
 
 SaveManager="*res://scripts/SaveManager.gd"
 DataLoader="*res://scripts/DataLoader.gd"
+SoundManager="*res://scripts/SoundManager.gd"
 
 [display]
 

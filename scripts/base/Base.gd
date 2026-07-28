@@ -314,16 +314,22 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _on_site_clicked(site: Dictionary) -> void:
-	var cat : String = site.get("category", "Mineral")
+	var cat     : String = site.get("category", "Mineral")
+	var scanner : bool   = SaveManager.game_data.get("ground_scanner", false)
 	SaveManager.game_data["current_zone"] = cat
-	_current_mineral = DataLoader.random_mineral_for_zone(cat)
+	# Sjanse-faktor: uten skanner 50 % sjanse for at hintet er "feil".
+	# Med Grunnskanner øker treffsikkerheten til 90 %.
+	var accuracy : float = 0.90 if scanner else 0.50
+	if randf() < accuracy:
+		_current_mineral = DataLoader.random_mineral_for_zone(cat)
+	else:
+		_current_mineral = DataLoader.random_mineral()   # fullstendig tilfeldig
 	_close_map()
 	# Start mining
 	_mining_active = true
 	mine_timer.start()
 	$UI/ActionBar/MineButton.text = "Stopp mining"
-	var scanner : bool = SaveManager.game_data.get("ground_scanner", false)
-	var hint : String  = (cat if scanner else ZONE_HINTS.get(cat, ""))
+	var hint : String = (cat if scanner else ZONE_HINTS.get(cat, ""))
 	_set_status("Gruvedrift startet – sone: %s  ·  utvinner %s" % [hint, _mineral_name(_current_mineral)])
 	_refresh_ui()
 

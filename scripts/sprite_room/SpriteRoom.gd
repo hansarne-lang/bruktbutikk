@@ -114,7 +114,6 @@ func _input(event: InputEvent) -> void:
 			if er_dist < INTERACT_DIST:
 				SaveManager.save_game()
 				get_tree().change_scene_to_file("res://scenes/engine_room/EngineRoom.tscn")
-				get_viewport().set_input_as_handled()
 				return
 			var dist: float = abs(player.position.x - PC_X)
 			if dist < INTERACT_DIST:

@@ -49,6 +49,11 @@ func new_game() -> void:
 		"ship_cargo_capacity": 40,
 		# Mining-tilstand (synkes fra Base.gd)
 		"mining_active":       false,
+		# Våpen
+		"torpedoes":           0,
+		"battery_capacity":    100,
+		"battery_charge":      100.0,
+		"battery_upgrade":     false,
 	}
 
 func save_game() -> void:
@@ -101,6 +106,10 @@ func load_game() -> bool:
 	if not game_data.has("ship_cargo"):           game_data["ship_cargo"]           = []
 	if not game_data.has("ship_cargo_capacity"):  game_data["ship_cargo_capacity"]  = 40
 	if not game_data.has("mining_active"):        game_data["mining_active"]        = false
+	if not game_data.has("torpedoes"):            game_data["torpedoes"]            = 0
+	if not game_data.has("battery_capacity"):     game_data["battery_capacity"]     = 100
+	if not game_data.has("battery_charge"):       game_data["battery_charge"]       = 100.0
+	if not game_data.has("battery_upgrade"):      game_data["battery_upgrade"]      = false
 	# Migrasjon: legg til nye skipkomponenter hvis de mangler
 	var comps : Array = game_data.get("ship_components", [])
 	var comp_ids : Array = []
@@ -361,6 +370,13 @@ func _apply_order(order: Dictionary) -> void:
 				tank["capacity"] = 100
 	elif item_id == "ground_scanner":
 		game_data["ground_scanner"] = true
+	elif item_id == "battery_upgrade":
+		game_data["battery_upgrade"]  = true
+		game_data["battery_capacity"] = 200
+		game_data["battery_charge"]   = 200.0
+	elif item_id in ["torpedoes_5", "torpedoes_10"]:
+		var amt : int = 10 if item_id == "torpedoes_10" else 5
+		game_data["torpedoes"] = game_data.get("torpedoes", 0) + amt
 
 ## ─────────────────────────────────────────────────────────────────
 ## Legg til logginnslag

@@ -71,6 +71,16 @@ const ORDER_CATALOG := [
 	 "desc": "90 % nøyaktighet på gruvekart","cost": 8000, "days": 3, "type": "upgrade"},
 	{"id": "extra_tank_order","name": "Ekstra mineraltank",
 	 "desc": "3. tank, 50 kap",            "cost": 2000,  "days": 3, "type": "upgrade"},
+	# ── Våpen og energi ────────────────────────────────────────
+	{"id": "torpedoes_5",     "name": "Torpedoer ×5",
+	 "desc": "5 torpedoer til torpedorøret (øyeblikkelig)",
+	 "cost": 500,  "days": 0, "type": "ammo"},
+	{"id": "torpedoes_10",    "name": "Torpedoer ×10",
+	 "desc": "10 torpedoer til torpedorøret (øyeblikkelig)",
+	 "cost": 900,  "days": 0, "type": "ammo"},
+	{"id": "battery_upgrade", "name": "Laser-batteri v2",
+	 "desc": "Dobler laserkapasiteten (100 → 200)",
+	 "cost": 2500, "days": 1, "type": "upgrade"},
 ]
 
 func _ready() -> void:
@@ -258,6 +268,7 @@ func _refresh_order_panel() -> void:
 			already_have = d.get("extra_tank", false)
 		elif item["type"] == "upgrade":
 			already_have = d.get(iid, false)
+		# "ammo" – aldri already_have, men vis beholdning i knapp-tekst
 
 		if already_have:
 			info.text = "%s – %s" % [item["name"], item["desc"]]
@@ -270,16 +281,24 @@ func _refresh_order_panel() -> void:
 			btn.text     = "Bestilt – dag %d" % pending_order.get("deliver_day", 0)
 			btn.disabled = true
 		else:
-			info.text = "%s – %s  (%d kr,  %d dag%s levering)" % [
-				item["name"], item["desc"], cost, days,
-				"er" if days > 1 else ""]
+			if item["type"] == "ammo":
+				var stock : int = SaveManager.game_data.get("torpedoes", 0)
+				info.text = "%s – %s  (%d kr)  [beholdning: %d]" % [
+					item["name"], item["desc"], cost, stock]
+			elif days == 0:
+				info.text = "%s – %s  (%d kr, øyeblikkelig)" % [
+					item["name"], item["desc"], cost]
+			else:
+				info.text = "%s – %s  (%d kr,  %d dag%s levering)" % [
+					item["name"], item["desc"], cost, days,
+					"er" if days > 1 else ""]
 			if credits < cost:
 				info.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55, 1))
-				btn.text     = "Bestill  (%d kr)" % cost
+				btn.text     = "Kjøp  (%d kr)" % cost
 				btn.disabled = true
 			else:
 				info.add_theme_color_override("font_color", Color(0.85, 0.9, 0.85, 1))
-				btn.text     = "Bestill  (%d kr)" % cost
+				btn.text     = "Kjøp  (%d kr)" % cost
 				btn.disabled = false
 				var captured : Dictionary = item.duplicate(true)
 				btn.pressed.connect(func() -> void: _place_order(captured))
@@ -292,6 +311,19 @@ func _place_order(item: Dictionary) -> void:
 	var cost : int = item.get("cost", 0)
 	if SaveManager.game_data.get("credits", 0) < cost:
 		return
+
+	# Ammo (torpedoer) – øyeblikkelig levering
+	if item.get("type", "") == "ammo":
+		SaveManager.game_data["credits"] = SaveManager.game_data.get("credits", 0) - cost
+		var amt : int = 10 if item["id"] == "torpedoes_10" else 5
+		SaveManager.game_data["torpedoes"] = SaveManager.game_data.get("torpedoes", 0) + amt
+		SaveManager.save_game()
+		SoundManager.play("kaching")
+		offer_lbl.text = "Kjøpt: %s  ·  %d torpedoer totalt" % [
+			item["name"], SaveManager.game_data.get("torpedoes", 0)]
+		_refresh_order_panel()
+		return
+
 	var extra := {}
 	if item.has("comp_id"):
 		extra["comp_id"]   = item["comp_id"]
@@ -299,8 +331,11 @@ func _place_order(item: Dictionary) -> void:
 	SaveManager.place_order(
 		item["id"], item["name"], cost, item["days"], extra)
 	SaveManager.save_game()
-	offer_lbl.text = "Bestilt: %s  –  leveres om %d dag(er)" % [
-		item["name"], item["days"]]
+	if item["days"] == 0:
+		offer_lbl.text = "Kjøpt: %s" % item["name"]
+	else:
+		offer_lbl.text = "Bestilt: %s  –  leveres om %d dag(er)" % [
+			item["name"], item["days"]]
 	_refresh_order_panel()
 
 # ── Tegning ──────────────────────────────────────────────────

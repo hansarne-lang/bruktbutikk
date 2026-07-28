@@ -44,6 +44,12 @@ const EVENTS := [
 		"effect": "none",
 		"amount": 0,
 	},
+	{
+		"title":  "Meteorstorm foran!",
+		"text":   "Radaren varsler et tett meteorbeltet rett i kursen. Styr skipet helskinnet igjennom!",
+		"effect": "meteor_storm",
+		"amount": 0,
+	},
 ]
 
 var _stars         : Array = []
@@ -113,6 +119,13 @@ func _process(delta: float) -> void:
 # ── Tilfeldige hendelser (#2) ─────────────────────────────────
 func _trigger_event() -> void:
 	var ev : Dictionary = EVENTS[randi() % EVENTS.size()]
+
+	# Meteorstorm → bytt til mini-spill-scene umiddelbart
+	if ev["effect"] == "meteor_storm":
+		SaveManager.save_game()
+		get_tree().change_scene_to_file("res://scenes/meteor_storm/MeteorStorm.tscn")
+		return
+
 	event_title.text = "⚠  " + ev["title"]
 	event_text.text  = ev["text"]
 

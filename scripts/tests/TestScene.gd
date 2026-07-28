@@ -19,8 +19,10 @@ func _run() -> void:
 	runner.run_all()
 
 func _on_done(summary: String, results: Array) -> void:
-	var all_pass : bool = not summary.contains("0 /") and results.filter(
-		func(s: String) -> bool: return s.begins_with("❌")).is_empty()
+	# BUG-FIX 1: "50 / 50" inneholder "0 /" → bruk "(0 feilet)" i stedet
+	# BUG-FIX 2: typed lambda func(s: String) på untyped Array → bruk func(s)
+	var all_pass : bool = summary.contains("(0 feilet)") and \
+		results.filter(func(s) -> bool: return str(s).begins_with("❌")).is_empty()
 
 	if all_pass:
 		summary_lbl.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4, 1))
@@ -28,4 +30,4 @@ func _on_done(summary: String, results: Array) -> void:
 		summary_lbl.add_theme_color_override("font_color", Color(1.0, 0.4, 0.3, 1))
 	summary_lbl.text = summary
 
-	result_lbl.text = "\n".join(results)
+	result_lbl.text = "\n".join(Array(results).map(func(s) -> String: return str(s)))

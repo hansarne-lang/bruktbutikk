@@ -66,6 +66,26 @@ func random_mineral() -> String:
 		return minerals.keys()[0]
 	return pool[randi() % pool.size()]
 
+## Tilfeldig mineral med vekting mot en sonekategori
+func random_mineral_for_zone(zone_cat: String) -> String:
+	if zone_cat == "" or minerals.is_empty():
+		return random_mineral()
+	var day : int = SaveManager.game_data.get("day", 1)
+	var unlock_day := {"common": 1, "uncommon": 3, "rare": 7, "very_rare": 14, "legendary": 25}
+	var weights    := {"common": 60, "uncommon": 25, "rare": 12, "very_rare": 2, "legendary": 1}
+	var pool : Array = []
+	for id in minerals:
+		var m       : Dictionary = minerals[id]
+		var rarity  : String     = m.get("rarity",   "common")
+		var cat     : String     = m.get("category", "")
+		if day < unlock_day.get(rarity, 1): continue
+		var w : int = weights.get(rarity, 10)
+		if cat == zone_cat: w *= 4   # 4× vektboost for sonas kategori
+		for _i in w:
+			pool.append(id)
+	if pool.is_empty(): return random_mineral()
+	return pool[randi() % pool.size()]
+
 ## Sjekk om et mineral er laast opp
 func is_mineral_unlocked(id: String) -> bool:
 	var day : int = SaveManager.game_data.get("day", 1)

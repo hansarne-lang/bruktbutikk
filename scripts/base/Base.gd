@@ -26,6 +26,31 @@ var _drill_angle      : float  = 0.0
 var _time             : float  = 0.0
 var _particles        : Array  = []  # {x, y, vx, vy, life, color}
 
+# ── Gruvekart ────────────────────────────────────────────────────
+var _map_open    : bool  = false
+var _map_hovered : int   = -1
+
+# ── Overflow ─────────────────────────────────────────────────────
+var _pending_mineral : String = ""   # mineral som ikke fikk plass
+
+# ── Sonekart farger ──────────────────────────────────────────────
+const ZONE_COLORS := {
+	"Metall":   Color(0.90, 0.65, 0.25),
+	"Krystall": Color(0.35, 0.60, 1.00),
+	"Mineral":  Color(0.58, 0.58, 0.48),
+	"Element":  Color(0.25, 0.95, 0.80),
+	"Gass":     Color(0.40, 0.90, 0.45),
+	"Ukjent":   Color(0.88, 0.88, 0.95),
+}
+const ZONE_HINTS := {
+	"Metall":   "Varme tonser – metaller mulig",
+	"Krystall": "Kalde blåtoner – krystaller mulig",
+	"Mineral":  "Grå sone – mineraler mulig",
+	"Element":  "Elektrisk glød – elementer mulig",
+	"Gass":     "Grønnskimmer – gass mulig",
+	"Ukjent":   "Uleselig signal – ukjent innhold",
+}
+
 # ── Farger ───────────────────────────────────────────────────
 const C_SPACE  := Color(0.02, 0.02, 0.08)
 const C_MOON   := Color(0.38, 0.36, 0.32)
@@ -60,6 +85,9 @@ func _ready() -> void:
 		get_tree().change_scene_to_file("res://scenes/main_menu/MainMenu.tscn"))
 	$UI/UpgradePanel/VBox/TitleRow/CloseBtn.pressed.connect(func(): upgrade_panel.visible = false)
 	$UI/LogPanel/VBox/TitleRow/CloseBtn.pressed.connect(func(): log_panel.visible = false)
+
+	# Kart: åpnes via Start mining (se _on_mine_toggled)
+	# Overflow-layer er skjult til det trengs (se _show_overflow_dialog)
 
 	_current_mineral = DataLoader.random_mineral()
 
@@ -105,33 +133,47 @@ func _update_mine_timer() -> void:
 
 # ── Mining ───────────────────────────────────────────────────
 func _on_mine_toggled() -> void:
-	_mining_active = not _mining_active
+	# BUG-FIX: kart allerede åpent → "Avbryt"-klikk lukker kartet
+	if _map_open:
+		_close_map()
+		return
 	if _mining_active:
-		mine_timer.start()
-		$UI/ActionBar/MineButton.text = "Stopp mining"
-		_set_status("Gruvedrift påbegynt – utvinner %s" % _mineral_name(_current_mineral))
-	else:
+		# Stopp direkte
 		mine_timer.stop()
+		_mining_active = false
 		$UI/ActionBar/MineButton.text = "Start mining"
 		_set_status("Gruvedrift stoppet.")
+	else:
+		# Vis gruvekart først
+		_map_open    = true
+		_map_hovered = -1
+		$UI/ActionBar/MineButton.text = "Avbryt"
+		upgrade_panel.visible = false
+		log_panel.visible     = false
+		queue_redraw()
 
 func _on_mine_tick() -> void:
 	SoundManager.play("drill_tick", -4.0)
 	var ok := SaveManager.add_mineral(_current_mineral, MINE_AMT)
 	if not ok:
-		# Prøv å bytte til et mineral som passer i en eksisterende tank
+		# Prøv stille bytte til mineral som finnes i eksisterende tank med plass
 		if _switch_to_available_mineral():
 			ok = SaveManager.add_mineral(_current_mineral, MINE_AMT)
+		else:
+			# Ekte overflow – vis dialog
+			_pending_mineral = _current_mineral   # siste forsøkte mineral
+			_show_overflow_dialog()
+			mine_timer.stop()
+			_mining_active = false
+			$UI/ActionBar/MineButton.text = "Start mining"
+			return
 	if ok:
+		_check_tank_full_warning()
 		_spawn_particles(980.0, 392.0)
 		if randf() < 0.25:
-			_current_mineral = DataLoader.random_mineral()
+			var zone : String = SaveManager.game_data.get("current_zone", "")
+			_current_mineral = DataLoader.random_mineral_for_zone(zone)
 		_refresh_ui()
-	else:
-		mine_timer.stop()
-		_mining_active = false
-		$UI/ActionBar/MineButton.text = "Start mining"
-		_set_status("Alle tanker er fulle! Gå om bord og reis til en trader for å selge.")
 
 ## Bytter _current_mineral til et som passer i en eksisterende tank.
 ## Returnerer true hvis det fantes plass et sted.
@@ -143,8 +185,153 @@ func _switch_to_available_mineral() -> bool:
 		var cap : int    = tank.get("capacity",   50)
 		if mid != "" and amt < cap:
 			_current_mineral = mid
+			_set_status("Byttet til %s (ingen plass til annet mineral)" % _mineral_name(mid))
 			return true
 	return false
+
+## Sjekker om den aktive tanken nettopp ble full → advarsel til spiller
+func _check_tank_full_warning() -> void:
+	var tanks : Array = SaveManager.game_data.get("tanks", [])
+	for i in tanks.size():
+		var tank : Dictionary = tanks[i]
+		if tank.get("mineral_id", "") == _current_mineral:
+			var amt : int = tank.get("amount", 0)
+			var cap : int = tank.get("capacity", 50)
+			if amt >= cap:
+				_set_status("⚠  Tank %d er full (%s)! Vurder å reise til en trader." % [i + 1, _mineral_name(_current_mineral)])
+			elif amt >= cap * 0.8:
+				_set_status("Tank %d er %d%% full (%s)." % [i + 1, int(float(amt)/float(cap)*100), _mineral_name(_current_mineral)])
+			break
+
+# ── Overflow-dialog ───────────────────────────────────────────────
+func _show_overflow_dialog() -> void:
+	var panel   := $OverflowLayer/OverflowPanel
+	var bg      := $OverflowLayer/OverflowBg
+	var msg_lbl := $OverflowLayer/OverflowPanel/VBox/MessageLabel as Label
+	var btn_box := $OverflowLayer/OverflowPanel/VBox/ButtonsVBox
+
+	# Rydd gamle knapper
+	for child in btn_box.get_children():
+		child.queue_free()
+
+	msg_lbl.text = "Du fant %s, men du har ingen ledig tank.\nHva vil du gjøre?" % _mineral_name(_pending_mineral)
+
+	# Knapp: dump det nye funnet
+	var dump_btn := Button.new()
+	dump_btn.text = "🗑  Dump funnet mineral (mist %s)" % _mineral_name(_pending_mineral)
+	dump_btn.custom_minimum_size = Vector2(460, 38)
+	dump_btn.pressed.connect(func() -> void:
+		_close_overflow()
+		_set_status("Dumpet %s. Gruvedriften fortsetter." % _mineral_name(_pending_mineral))
+		_resume_mining_same_zone())
+	btn_box.add_child(dump_btn)
+
+	# Knapper: bytt ut en tank
+	var tanks : Array = SaveManager.game_data.get("tanks", [])
+	for i in tanks.size():
+		var tank : Dictionary = tanks[i]
+		var mid  : String     = tank.get("mineral_id", "")
+		var amt  : int        = tank.get("amount", 0)
+		if mid == "" or amt == 0:
+			continue
+		var swap_btn := Button.new()
+		swap_btn.text = "↕  Bytt Tank %d: %s (%d stk) → legg inn %s" % [
+			i + 1, _mineral_name(mid), amt, _mineral_name(_pending_mineral)]
+		swap_btn.custom_minimum_size = Vector2(460, 38)
+		var tank_idx : int    = i
+		var old_mid  : String = mid
+		swap_btn.pressed.connect(func() -> void:
+			# Tøm den valgte tanken og sett inn det nye mineralet
+			tanks[tank_idx]["mineral_id"] = _pending_mineral
+			tanks[tank_idx]["amount"]     = MINE_AMT
+			_close_overflow()
+			_set_status("Dumpet %s og lagt inn %s i Tank %d." % [
+				_mineral_name(old_mid), _mineral_name(_pending_mineral), tank_idx + 1])
+			_current_mineral = _pending_mineral
+			# BUG-FIX: bruk _restart_mining, ikke _resume (ville overskrive _current_mineral)
+			_restart_mining())
+		btn_box.add_child(swap_btn)
+
+	# Knapp: reis til trader
+	var trader_btn := Button.new()
+	trader_btn.text = "🚀 Stopp mining og reis til trader"
+	trader_btn.custom_minimum_size = Vector2(460, 38)
+	trader_btn.pressed.connect(func() -> void:
+		_close_overflow()
+		SaveManager.save_game()
+		get_tree().change_scene_to_file("res://scenes/sprite_room/SpriteRoom.tscn"))
+	btn_box.add_child(trader_btn)
+
+	bg.visible    = true
+	panel.visible = true
+
+func _close_overflow() -> void:
+	$OverflowLayer/OverflowBg.visible     = false
+	$OverflowLayer/OverflowPanel.visible  = false
+	_pending_mineral = ""
+
+func _resume_mining_same_zone() -> void:
+	var zone : String = SaveManager.game_data.get("current_zone", "")
+	_current_mineral = DataLoader.random_mineral_for_zone(zone)
+	_restart_mining()
+
+func _restart_mining() -> void:
+	_mining_active = true
+	mine_timer.start()
+	$UI/ActionBar/MineButton.text = "Stopp mining"
+	_refresh_ui()
+
+# ── Gruvekart ─────────────────────────────────────────────────────
+func _drill_site_pos(idx: int) -> Vector2:
+	var col : int = idx % 4
+	var row : int = idx / 4
+	return Vector2(200.0 + col * 230.0, 148.0 + row * 168.0)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not _map_open:
+		return
+	if event is InputEventMouseMotion:
+		var me := event as InputEventMouseMotion
+		var sites : Array = SaveManager.game_data.get("drill_sites", [])
+		_map_hovered = -1
+		for i in sites.size():
+			if _drill_site_pos(i).distance_to(me.position) < 36.0:
+				_map_hovered = i
+				break
+		queue_redraw()
+	elif event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if not mb.pressed or mb.button_index != MOUSE_BUTTON_LEFT:
+			return
+		var sites : Array = SaveManager.game_data.get("drill_sites", [])
+		for i in sites.size():
+			if _drill_site_pos(i).distance_to(mb.position) < 36.0:
+				_on_site_clicked(sites[i])
+				get_viewport().set_input_as_handled()
+				return
+		# Klikk utenfor → avbryt
+		_close_map()
+		get_viewport().set_input_as_handled()
+
+func _on_site_clicked(site: Dictionary) -> void:
+	var cat : String = site.get("category", "Mineral")
+	SaveManager.game_data["current_zone"] = cat
+	_current_mineral = DataLoader.random_mineral_for_zone(cat)
+	_close_map()
+	# Start mining
+	_mining_active = true
+	mine_timer.start()
+	$UI/ActionBar/MineButton.text = "Stopp mining"
+	var scanner : bool = SaveManager.game_data.get("ground_scanner", false)
+	var hint : String  = (cat if scanner else ZONE_HINTS.get(cat, ""))
+	_set_status("Gruvedrift startet – sone: %s  ·  utvinner %s" % [hint, _mineral_name(_current_mineral)])
+	_refresh_ui()
+
+func _close_map() -> void:
+	_map_open    = false
+	_map_hovered = -1
+	$UI/ActionBar/MineButton.text = "Start mining"
+	queue_redraw()
 
 func _spawn_particles(x: float, y: float) -> void:
 	var colors := ["CC8833", "FFDD44", "AADDFF", "88CCFF", "4488FF", "AAFFAA"]
@@ -203,9 +390,10 @@ func _refresh_upgrade_panel() -> void:
 	var cr : int = d.get("credits", 0)
 
 	var upgrades := [
-		{"key": "drill_upgraded", "label": "Raskere drill  (2s intervall)", "cost": 1500},
-		{"key": "extra_tank",     "label": "3. mineraltank",                "cost": 2000},
-		{"key": "bigger_tanks",   "label": "Større tanker  (100 kap)",      "cost": 3000},
+		{"key": "drill_upgraded",  "label": "Raskere drill  (2s intervall)", "cost": 1500},
+		{"key": "extra_tank",      "label": "3. mineraltank",                 "cost": 2000},
+		{"key": "bigger_tanks",    "label": "Større tanker  (100 kap)",       "cost": 3000},
+		{"key": "ground_scanner",  "label": "Grunnskanner  (avslører soner)", "cost": 8000},
 	]
 	for upg in upgrades:
 		var row  := HBoxContainer.new()
@@ -385,6 +573,10 @@ func _draw() -> void:
 		col.a = clampf(p["life"] * 2.5, 0.0, 1.0)
 		draw_circle(Vector2(p["x"], p["y"]), clampf(p["life"] * 4.0, 1.0, 4.0), col)
 
+	# Gruvekart-overlay
+	if _map_open:
+		_draw_mining_map()
+
 func _draw_dome(cx: float, base_y: float, w: float, h: float) -> void:
 	draw_rect(Rect2(cx - w / 2, base_y - 10, w, 18), C_DOME)
 	var steps := 24
@@ -463,3 +655,83 @@ func _draw_ship(cx: float, base_y: float) -> void:
 func _draw_crater(cx: float, cy: float, r: float) -> void:
 	draw_circle(Vector2(cx, cy), r, C_MOON_D)
 	draw_arc(Vector2(cx, cy), r, 0, TAU, 20, Color(0.22, 0.20, 0.18), 1.5)
+
+# ── Gruvekart-overlay ─────────────────────────────────────────────
+func _draw_mining_map() -> void:
+	var font    : Font = ThemeDB.fallback_font
+	var scanner : bool = SaveManager.game_data.get("ground_scanner", false)
+	var sites   : Array = SaveManager.game_data.get("drill_sites", [])
+
+	# Mørk halvtransparent bakgrunn
+	draw_rect(Rect2(0, 0, 1280, 720), Color(0.02, 0.03, 0.07, 0.94))
+	# Panel-ramme
+	draw_rect(Rect2(60, 58, 1160, 600), Color(0.07, 0.09, 0.16))
+	draw_rect(Rect2(60, 58, 1160, 600), Color(0.25, 0.40, 0.65, 0.55), false, 2.0)
+
+	# Tittel
+	draw_string(font, Vector2(640, 44), "VELG BORESTED", HORIZONTAL_ALIGNMENT_CENTER,
+		1280, 22, Color(0.55, 0.80, 1.00, 1.0))
+	var sub : String = "Grunnskanner aktiv — sonekategorier synlige" if scanner else \
+		"Trykk på et borested  ·  fargen gir et vagt hint om innholdet"
+	draw_string(font, Vector2(640, 68), sub, HORIZONTAL_ALIGNMENT_CENTER,
+		1280, 12, Color(0.55, 0.65, 0.75, 0.85))
+
+	# Rutenett-linjer mellom siter
+	for row in 3:
+		for col in 4:
+			var gx : float = 200.0 + col * 230.0
+			var gy : float = 148.0 + row * 168.0
+			draw_rect(Rect2(gx - 60, gy - 60, 120, 120),
+				Color(0.12, 0.14, 0.22, 0.4))
+
+	# Tegn hvert borested
+	for i in sites.size():
+		_draw_site(i, sites[i], scanner, font)
+
+	# Legende (bottom)
+	var lx : float = 120.0
+	for cat in ZONE_COLORS.keys():
+		var lc : Color = ZONE_COLORS[cat]
+		draw_circle(Vector2(lx + 7, 682), 7.0, lc)
+		draw_string(font, Vector2(lx + 18, 687), cat, HORIZONTAL_ALIGNMENT_LEFT,
+			90, 11, Color(0.7, 0.7, 0.7, 0.8))
+		lx += 110.0
+
+	# Avbryt-instruksjon
+	draw_string(font, Vector2(640, 710), "[Klikk utenfor et punkt for å avbryte]",
+		HORIZONTAL_ALIGNMENT_CENTER, 1280, 11, Color(0.4, 0.45, 0.5, 0.7))
+
+func _draw_site(idx: int, site: Dictionary, scanner: bool, font: Font) -> void:
+	var cat   : String  = site.get("category", "Mineral")
+	var col   : Color   = ZONE_COLORS.get(cat, Color(0.5, 0.5, 0.5))
+	var pos   : Vector2 = _drill_site_pos(idx)
+	var hover : bool    = (idx == _map_hovered)
+	var pulse : float   = sin(_time * 2.3 + idx * 0.9) * 0.5 + 0.5
+
+	# Ytre glow
+	var gr : float = 52.0 + pulse * 14.0 + (10.0 if hover else 0.0)
+	draw_circle(pos, gr,        Color(col.r, col.g, col.b, 0.10 + pulse * 0.05))
+	draw_circle(pos, gr * 0.6,  Color(col.r, col.g, col.b, 0.18 + pulse * 0.07))
+
+	# Kjerne
+	var cr : float = 28.0 + (7.0 if hover else 0.0)
+	draw_circle(pos, cr, Color(col.r * 0.45, col.g * 0.45, col.b * 0.45))
+	draw_circle(pos, cr * 0.72, col)
+
+	# Senterdot / drillpunkt
+	draw_circle(pos, 5.5, Color(1.0, 1.0, 1.0, 0.85))
+	draw_line(pos, pos + Vector2(0.0, 22.0), Color(0.75, 0.75, 0.75, 0.7), 2.0)
+
+	# Nummerlabel
+	draw_string(font, pos + Vector2(-4.0, 5.0), str(idx + 1),
+		HORIZONTAL_ALIGNMENT_LEFT, 20, 10, Color(0.15, 0.15, 0.15, 0.9))
+
+	# Scanner-info (enten kategori eller vag hint)
+	if scanner:
+		draw_string(font, pos + Vector2(-40.0, cr + 16.0), cat,
+			HORIZONTAL_ALIGNMENT_LEFT, 80, 11, Color(0.9, 0.95, 0.9, 0.9))
+	else:
+		# Vag hint: kategori-initial + "..."
+		var vague : String = cat.substr(0, 1).to_upper() + "?"
+		draw_string(font, pos + Vector2(-8.0, cr + 16.0), vague,
+			HORIZONTAL_ALIGNMENT_LEFT, 40, 11, Color(col.r, col.g, col.b, 0.7))

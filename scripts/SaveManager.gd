@@ -35,6 +35,10 @@ func new_game() -> void:
 		"trade_log":       [],
 		# Stasjonsnavn
 		"moon_name":       "Luna-7 Mining Station",
+		# Gruvekart
+		"current_zone":    "",
+		"ground_scanner":  false,
+		"drill_sites":     _gen_drill_sites(),
 	}
 
 func save_game() -> void:
@@ -77,7 +81,20 @@ func load_game() -> bool:
 	if not game_data.has("chosen_trader"):  game_data["chosen_trader"]  = 1
 	if not game_data.has("trade_log"):      game_data["trade_log"]      = []
 	if not game_data.has("moon_name"):      game_data["moon_name"]      = "Luna-7 Mining Station"
+	if not game_data.has("current_zone"):   game_data["current_zone"]   = ""
+	if not game_data.has("ground_scanner"): game_data["ground_scanner"] = false
+	if not game_data.has("drill_sites"):    game_data["drill_sites"]    = _gen_drill_sites()
 	return true
+
+func _gen_drill_sites() -> Array:
+	var cats := ["Metall", "Metall", "Krystall", "Krystall", "Mineral",
+				 "Mineral", "Element", "Element", "Gass", "Ukjent",
+				 "Krystall", "Metall"]
+	cats.shuffle()
+	var sites : Array = []
+	for i in 12:
+		sites.append({"id": i, "category": cats[i]})
+	return sites
 
 ## Beregn totalt antall enheter i alle tanker
 func total_minerals() -> int:

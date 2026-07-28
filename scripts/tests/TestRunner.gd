@@ -333,10 +333,12 @@ func _t37_day25_legendary_appears() -> void:
 	SaveManager.new_game()
 	SaveManager.game_data["day"] = 25
 	var saw := false
-	for _i in 3000:
+	# BUG-FIX: 3000 iterasjoner ga ~0.27% sjanse for feil (P(legendary)≈0.197%).
+	# 7000 iterasjoner: P(feil) < 0.0001%
+	for _i in 7000:
 		if DataLoader.get_mineral(DataLoader.random_mineral()).get("rarity","") == "legendary":
 			saw = true; break
-	_chk("T37  dag 25 → legendary kan dukke opp (3000 forsøk)", saw)
+	_chk("T37  dag 25 → legendary kan dukke opp (7000 forsøk)", saw)
 
 func _t38_never_returns_empty() -> void:
 	SaveManager.new_game()

@@ -29,9 +29,21 @@ text = "Dag  1"
 theme_override_font_sizes/font_size = 14
 theme_override_colors/font_color = Color(0.6, 0.8, 1.0, 1)
 
+[node name="DayProgress" type="ProgressBar" parent="UI/HUD"]
+layout_mode = 2
+custom_minimum_size = Vector2(90, 14)
+value = 0.0
+show_percentage = false
+
+[node name="DayTimeLabel" type="Label" parent="UI/HUD"]
+layout_mode = 2
+text = "0%"
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.55, 0.75, 0.55, 0.9)
+
 [node name="Spacer1" type="Control" parent="UI/HUD"]
 layout_mode = 2
-custom_minimum_size = Vector2(30, 0)
+custom_minimum_size = Vector2(12, 0)
 
 [node name="CreditsLabel" type="Label" parent="UI/HUD"]
 layout_mode = 2
@@ -141,11 +153,6 @@ text = "Start mining"
 layout_mode = 2
 custom_minimum_size = Vector2(140, 36)
 text = "Gaa om bord"
-
-[node name="LaunchButton" type="Button" parent="UI/ActionBar"]
-layout_mode = 2
-custom_minimum_size = Vector2(140, 36)
-text = "Kart / Reis"
 
 [node name="UpgradeButton" type="Button" parent="UI/ActionBar"]
 layout_mode = 2

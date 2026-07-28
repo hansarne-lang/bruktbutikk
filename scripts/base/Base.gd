@@ -8,6 +8,8 @@ const MINE_AMT             := 1
 @onready var hud_day_lbl  : Label          = $UI/HUD/DayLabel
 @onready var hud_cred_lbl : Label          = $UI/HUD/CreditsLabel
 @onready var hud_mine_lbl : Label          = $UI/HUD/MiningLabel
+@onready var day_progress : ProgressBar    = $UI/HUD/DayProgress
+@onready var day_time_lbl : Label          = $UI/HUD/DayTimeLabel
 @onready var tank_panel                    = $UI/TankPanel
 @onready var tank_list                     = $UI/TankPanel/TankVBox/TankList
 @onready var info_panel                    = $UI/InfoPanel
@@ -51,7 +53,6 @@ func _ready() -> void:
 
 	$UI/ActionBar/MineButton.pressed.connect(_on_mine_toggled)
 	$UI/ActionBar/ShipButton.pressed.connect(_on_enter_ship)
-	$UI/ActionBar/LaunchButton.pressed.connect(_on_launch)
 	$UI/ActionBar/UpgradeButton.pressed.connect(_toggle_upgrade_panel)
 	$UI/ActionBar/LogButton.pressed.connect(_toggle_log_panel)
 	$UI/ActionBar/MainMenuButton.pressed.connect(func() -> void:
@@ -77,6 +78,12 @@ func _process(delta: float) -> void:
 		# Dag/natt-syklus: fremskrider sakte under mining
 		var tod : float = SaveManager.game_data.get("time_of_day", 0.0)
 		SaveManager.game_data["time_of_day"] = fmod(tod + delta * 0.012, TAU)
+
+	# Oppdater dag-fremgang i HUD
+	var tod_now  : float = SaveManager.game_data.get("time_of_day", 0.0)
+	var pct      : float = tod_now / TAU * 100.0
+	day_progress.value   = pct
+	day_time_lbl.text    = "%d%%" % int(pct)
 
 	# Oppdater partikler
 	for i : int in range(_particles.size() - 1, -1, -1):
@@ -107,6 +114,7 @@ func _on_mine_toggled() -> void:
 		_set_status("Gruvedrift stoppet.")
 
 func _on_mine_tick() -> void:
+	SoundManager.play("drill_tick", -4.0)
 	var ok := SaveManager.add_mineral(_current_mineral, MINE_AMT)
 	if ok:
 		_spawn_particles(980.0, 392.0)
@@ -218,6 +226,7 @@ func _buy_upgrade(key: String, cost: int) -> void:
 		_update_mine_timer()
 		if _mining_active:
 			mine_timer.start()
+	SoundManager.play("kaching")
 	SaveManager.save_game()
 	_refresh_ui()
 	_refresh_upgrade_panel()

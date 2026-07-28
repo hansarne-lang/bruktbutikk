@@ -1,0 +1,53 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/trader_office/TraderOffice.gd" id="1"]
+
+[node name="TraderOffice" type="Node2D"]
+script = ExtResource("1")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="TraderLabel" type="Label" parent="UI"]
+position = Vector2(0, 14)
+custom_minimum_size = Vector2(1280, 36)
+text = ""
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 26
+theme_override_colors/font_color = Color(0.7, 0.88, 1.0, 0.9)
+
+[node name="GreetingLabel" type="Label" parent="UI"]
+position = Vector2(200, 58)
+custom_minimum_size = Vector2(880, 32)
+text = ""
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.85, 0.92, 0.75, 0.9)
+
+[node name="OfferLabel" type="Label" parent="UI"]
+position = Vector2(200, 90)
+custom_minimum_size = Vector2(880, 28)
+text = ""
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 17
+theme_override_colors/font_color = Color(1.0, 0.88, 0.3, 1)
+
+[node name="CargoLabel" type="Label" parent="UI"]
+position = Vector2(60, 140)
+custom_minimum_size = Vector2(500, 100)
+text = ""
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.7, 0.88, 0.7, 1)
+
+[node name="ButtonPanel" type="VBoxContainer" parent="UI"]
+position = Vector2(900, 150)
+custom_minimum_size = Vector2(320, 0)
+theme_override_constants/separation = 14
+
+[node name="SellButton" type="Button" parent="UI/ButtonPanel"]
+custom_minimum_size = Vector2(320, 56)
+text = "Selg alt"
+theme_override_font_sizes/font_size = 18
+
+[node name="HomeButton" type="Button" parent="UI/ButtonPanel"]
+custom_minimum_size = Vector2(320, 40)
+text = "Reis hjem uten å selge"

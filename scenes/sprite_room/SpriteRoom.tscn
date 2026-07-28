@@ -60,6 +60,13 @@ theme_override_font_sizes/font_size = 16
 [node name="BackButton" type="Button" parent="UI/HUD"]
 text = "← Tilbake til basen"
 
+[node name="HudSpacer" type="Control" parent="UI/HUD"]
+layout_mode = 2
+custom_minimum_size = Vector2(20, 0)
+
+[node name="MapButton" type="Button" parent="UI/HUD"]
+text = "🚀 Kart / Reis"
+
 [node name="HintLabel" type="Label" parent="UI"]
 position = Vector2(10, 555)
 text = "A/D eller ← → for å gå  •  E for å interagere"
@@ -92,6 +99,11 @@ position = Vector2(0, 6)
 text = "  KOMMANDÅRE 64  BASIC V2  —  VOID MINER SHIP COMPUTER  —  64K RAM FREE"
 theme_override_font_sizes/font_size = 14
 theme_override_colors/font_color = Color(0.0, 0.0, 0.0, 1)
+
+[node name="XButton" type="Button" parent="UI/Terminal/TerminalVBox/TitleBar"]
+position = Vector2(1088, 4)
+custom_minimum_size = Vector2(24, 24)
+text = "✕"
 
 [node name="ScreenBg" type="ColorRect" parent="UI/Terminal/TerminalVBox"]
 color = Color(0.0, 0.0, 0.0, 1)

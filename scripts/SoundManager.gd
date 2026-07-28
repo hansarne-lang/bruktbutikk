@@ -34,6 +34,8 @@ func _gen(id: String) -> AudioStreamWAV:
 		"kaching":      return _tone(523, 1046, 0.38, 0.65)      # kassalyd
 		"door_open":    return _tone(200, 260, 0.18, 0.35)
 		"combine":      return _tone(440, 880, 0.28, 0.55)       # sett-kombiner
+		"drill_tick":   return _tone(110, 60,  0.18, 0.45, 1)    # lavfrekvent rumling
+		"upgrade_buy":  return _tone(523, 1046, 0.38, 0.65)      # alias for kaching
 		_:              return _tone(440, 440, 0.10, 0.30)
 
 # ── Lydgenerator ──────────────────────────────────────────────

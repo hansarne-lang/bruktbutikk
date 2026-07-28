@@ -80,7 +80,7 @@ func _ready() -> void:
 	var chosen : int        = SaveManager.game_data.get("chosen_trader", 1)
 	var td     : Dictionary = TRADERS.get(chosen, TRADERS[1])
 	trader_lbl.text = "Kurs mot %s  (%d%% av baseverdi)" % [td["name"], int(td["multiplier"] * 100)]
-	btn_sell.text   = "Selg til %s" % td["name"]
+	btn_sell.text   = "Ankom %s" % td["name"]
 
 	_refresh_cargo()
 
@@ -134,30 +134,10 @@ func _trigger_event() -> void:
 func _dismiss_event() -> void:
 	event_panel.visible = false
 
-# ── Selg last ────────────────────────────────────────────────
+# ── Ankommer trader – gå til kontoret for forhandling ────────
 func _go_trader() -> void:
-	var chosen  : int        = SaveManager.game_data.get("chosen_trader", 1)
-	var td      : Dictionary = TRADERS.get(chosen, TRADERS[1])
-	var tanks   : Array      = SaveManager.game_data.get("tanks", [])
-	var earned  : int        = 0
-
-	for tank in tanks:
-		var mid : String = tank.get("mineral_id", "")
-		var amt : int    = tank.get("amount",     0)
-		if mid == "" or amt == 0:
-			continue
-		var val : int = int(DataLoader.get_mineral(mid).get("base_value", 0))
-		earned += int(float(val) * float(amt) * td["multiplier"])
-
-	SaveManager.game_data["credits"]     = SaveManager.game_data.get("credits", 0) + earned
-	SaveManager.game_data["trades_done"] = SaveManager.game_data.get("trades_done", 0) + 1
-	SaveManager.game_data["day"]         = SaveManager.game_data.get("day", 1) + 1
-	SaveManager.game_data["last_earned"] = earned
-	SaveManager.game_data["last_trader"] = td["name"]
-	SaveManager.add_trade_log(earned, td["name"])
-	SaveManager.empty_tanks()
 	SaveManager.save_game()
-	get_tree().change_scene_to_file("res://scenes/base/Base.tscn")
+	get_tree().change_scene_to_file("res://scenes/trader_office/TraderOffice.tscn")
 
 func _go_home() -> void:
 	get_tree().change_scene_to_file("res://scenes/base/Base.tscn")

@@ -50,7 +50,9 @@ func _ready() -> void:
 	$UI/HUD/BackButton.pressed.connect(func():
 		SaveManager.save_game()
 		get_tree().change_scene_to_file("res://scenes/base/Base.tscn"))
+	$UI/HUD/MapButton.pressed.connect(_on_map)
 	$UI/Terminal/TerminalVBox/CloseBar/CloseButton.pressed.connect(_close_terminal)
+	$UI/Terminal/TerminalVBox/TitleBar/XButton.pressed.connect(_close_terminal)
 	input_field.text_submitted.connect(_on_input_submitted)
 	breakout_canvas.game_closed.connect(_close_breakout)
 	snake_canvas.game_closed.connect(_close_snake)
@@ -121,6 +123,13 @@ func _open_terminal() -> void:
 func _close_terminal() -> void:
 	terminal_open    = false
 	terminal.visible = false
+
+func _on_map() -> void:
+	if SaveManager.total_minerals() == 0:
+		# Ingen last – vis advarsel i terminalen hvis den er lukket, ellers bare beep
+		return
+	SaveManager.save_game()
+	get_tree().change_scene_to_file("res://scenes/map/Map.tscn")
 
 func _open_breakout() -> void:
 	terminal_open          = false

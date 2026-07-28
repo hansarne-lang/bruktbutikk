@@ -323,7 +323,7 @@ func _draw_station(idx: int, cx: float, cond: int, lvl: int,
 	# ── Kondisjon-bar under navneplaten ──────────────────────
 	var bar_x : float = cx - 50.0
 	draw_rect(Rect2(bar_x, 475, 100, 8), Color(0.08, 0.09, 0.12))
-	var bar_w : float = cond.clamp(0, 100) * 1.0
+	var bar_w : float = float(clamp(cond, 0, 100))
 	draw_rect(Rect2(bar_x, 475, bar_w, 8), Color(glow.r, glow.g, glow.b, 0.85))
 
 	# ── Navneplate ───────────────────────────────────────────

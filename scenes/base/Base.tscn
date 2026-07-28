@@ -13,15 +13,15 @@ one_shot = false
 
 [node name="UI" type="CanvasLayer" parent="."]
 
+[node name="HudBg" type="ColorRect" parent="UI"]
+position = Vector2(0, 0)
+size = Vector2(1280, 36)
+color = Color(0.04, 0.06, 0.10, 0.92)
+
 [node name="HUD" type="HBoxContainer" parent="UI"]
 position = Vector2(0, 0)
 custom_minimum_size = Vector2(1280, 36)
 theme_override_constants/separation = 0
-
-[node name="HudBg" type="ColorRect" parent="UI/HUD"]
-layout_mode = 2
-color = Color(0.04, 0.06, 0.10, 0.92)
-custom_minimum_size = Vector2(1280, 36)
 
 [node name="DayLabel" type="Label" parent="UI/HUD"]
 layout_mode = 2
@@ -88,19 +88,15 @@ custom_minimum_size = Vector2(300, 60)
 autowrap_mode = 3
 theme_override_font_sizes/font_size = 12
 
-[node name="ActionBar" type="HBoxContainer" parent="UI"]
+[node name="ActionBg" type="ColorRect" parent="UI"]
 position = Vector2(0, 548)
-custom_minimum_size = Vector2(1280, 42)
-theme_override_constants/separation = 12
-
-[node name="ActionBg" type="ColorRect" parent="UI/ActionBar"]
-layout_mode = 2
+size = Vector2(1280, 52)
 color = Color(0.04, 0.06, 0.10, 0.92)
-custom_minimum_size = Vector2(1280, 42)
 
-[node name="Spacer" type="Control" parent="UI/ActionBar"]
-layout_mode = 2
-size_flags_horizontal = 3
+[node name="ActionBar" type="HBoxContainer" parent="UI"]
+position = Vector2(8, 552)
+custom_minimum_size = Vector2(1264, 42)
+theme_override_constants/separation = 12
 
 [node name="MineButton" type="Button" parent="UI/ActionBar"]
 layout_mode = 2
@@ -117,7 +113,7 @@ layout_mode = 2
 custom_minimum_size = Vector2(200, 36)
 text = "Reis til trader"
 
-[node name="Spacer2" type="Control" parent="UI/ActionBar"]
+[node name="Spacer" type="Control" parent="UI/ActionBar"]
 layout_mode = 2
 size_flags_horizontal = 3
 
@@ -127,8 +123,10 @@ custom_minimum_size = Vector2(120, 36)
 text = "Hovedmeny"
 
 [node name="StatusLabel" type="Label" parent="UI"]
-position = Vector2(340, 550)
-custom_minimum_size = Vector2(600, 36)
+position = Vector2(340, 510)
+custom_minimum_size = Vector2(600, 32)
 text = ""
+horizontal_alignment = 1
 theme_override_font_sizes/font_size = 13
 theme_override_colors/font_color = Color(0.8, 0.9, 0.7, 1)
+

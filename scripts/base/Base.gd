@@ -54,7 +54,7 @@ func _ready() -> void:
 	$UI/ActionBar/MineButton.pressed.connect(_on_mine_toggled)
 	$UI/ActionBar/ShipButton.pressed.connect(_on_enter_ship)
 	$UI/ActionBar/LaunchButton.pressed.connect(_on_launch)
-	$UI/ActionBar/MainMenuButton.pressed.connect(func():
+	$UI/ActionBar/MainMenuButton.pressed.connect(func() -> void:
 		SaveManager.save_game()
 		get_tree().change_scene_to_file("res://scenes/main_menu/MainMenu.tscn"))
 

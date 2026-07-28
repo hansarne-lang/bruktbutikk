@@ -334,6 +334,15 @@ func _apply_order(order: Dictionary) -> void:
 			var tanks : Array = game_data.get("tanks", [])
 			tanks.append({"mineral_id": "", "amount": 0, "capacity": 50})
 			game_data["tanks"] = tanks
+	elif item_id == "drill_upgraded":
+		game_data["drill_upgraded"] = true
+	elif item_id == "bigger_tanks":
+		if not game_data.get("bigger_tanks", false):
+			game_data["bigger_tanks"] = true
+			for tank in game_data.get("tanks", []):
+				tank["capacity"] = 100
+	elif item_id == "ground_scanner":
+		game_data["ground_scanner"] = true
 
 ## ─────────────────────────────────────────────────────────────────
 ## Legg til logginnslag

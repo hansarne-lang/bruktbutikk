@@ -3,14 +3,16 @@ extends Node2D
 
 const SPEED         := 225.0
 const PC_X          := 900.0
+const ENGINE_DOOR_X := 120.0   # Luke til motorrommet (venstre side)
 const INTERACT_DIST := 130.0
 
 # ── Romtegning ────────────────────────────────────────────────
 var _porthole_stars : Array = []
 var _time           : float = 0.0
 
-@onready var player          : Sprite2D     = $Player
+@onready var player               : Sprite2D = $Player
 @onready var interact_prompt               = $UI/InteractPrompt
+@onready var engine_room_prompt            = $UI/EngineRoomPrompt
 @onready var terminal                      = $UI/Terminal
 @onready var output_label    : Label       = $UI/Terminal/TerminalVBox/ScreenBg/OutputScroll/OutputLabel
 @onready var input_field     : LineEdit    = $UI/Terminal/TerminalVBox/ScreenBg/InputRow/InputField
@@ -92,6 +94,10 @@ func _process(delta: float) -> void:
 	else:
 		interact_prompt.visible = false
 
+	# Nærhet til motorrom-luke
+	var er_dist : float = abs(player.position.x - ENGINE_DOOR_X)
+	engine_room_prompt.visible = er_dist < INTERACT_DIST and not terminal_open
+
 # ── Tastaturhendelser ────────────────────────────────────────
 func _input(event: InputEvent) -> void:
 	if not event is InputEventKey: return
@@ -104,6 +110,12 @@ func _input(event: InputEvent) -> void:
 			_close_terminal()
 	else:
 		if key.keycode == KEY_E:
+			var er_dist : float = abs(player.position.x - ENGINE_DOOR_X)
+			if er_dist < INTERACT_DIST:
+				SaveManager.save_game()
+				get_tree().change_scene_to_file("res://scenes/engine_room/EngineRoom.tscn")
+				get_viewport().set_input_as_handled()
+				return
 			var dist: float = abs(player.position.x - PC_X)
 			if dist < INTERACT_DIST:
 				_open_terminal()
@@ -380,6 +392,16 @@ func _draw() -> void:
 
 	# ── Bakgrunn ─────────────────────────────────────────────
 	draw_rect(Rect2(0, 0, 1280, 720), C_BG)
+
+	# ── Motorrom-luke (venstre vegg) ──────────────────────────
+	draw_rect(Rect2(68, 340, 100, 152), Color(0.05, 0.07, 0.10))
+	draw_rect(Rect2(71, 343,  94, 146), Color(0.04, 0.06, 0.09))
+	draw_rect(Rect2(116, 343, 4, 146), Color(0.14, 0.18, 0.24))  # midtbjelke
+	draw_rect(Rect2(66, 338, 104, 156), C_ACCENT, false, 3.0)     # ramme
+	draw_circle(Vector2(178, 352), 6, Color(0.1, 0.85, 0.35))     # grønn lampe
+	var er_dist : float = abs(player.position.x - ENGINE_DOOR_X)
+	if er_dist < INTERACT_DIST:
+		draw_rect(Rect2(66, 338, 104, 156), Color(C_ACCENT.r, C_ACCENT.g, C_ACCENT.b, 0.15))
 
 	# ── Veggpaneler ──────────────────────────────────────────
 	draw_rect(Rect2(0, 60, 1280, 440), C_WALL)

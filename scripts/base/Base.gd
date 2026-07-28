@@ -16,7 +16,6 @@ const MINE_AMT             := 1
 @onready var info_text    : Label          = $UI/InfoPanel/InfoText
 @onready var status_lbl   : Label          = $UI/StatusLabel
 @onready var mine_timer   : Timer          = $MineTimer
-@onready var upgrade_panel                 = $UI/UpgradePanel
 @onready var log_panel                     = $UI/LogPanel
 @onready var engine_room_panel             = $UI/EngineRoomPanel
 
@@ -90,12 +89,10 @@ func _ready() -> void:
 
 	$UI/ActionBar/MineButton.pressed.connect(_on_mine_toggled)
 	$UI/ActionBar/ShipButton.pressed.connect(_on_enter_ship)
-	$UI/ActionBar/UpgradeButton.pressed.connect(_toggle_upgrade_panel)
 	$UI/ActionBar/LogButton.pressed.connect(_toggle_log_panel)
 	$UI/ActionBar/MainMenuButton.pressed.connect(func() -> void:
 		SaveManager.save_game()
 		get_tree().change_scene_to_file("res://scenes/main_menu/MainMenu.tscn"))
-	$UI/UpgradePanel/VBox/TitleRow/CloseBtn.pressed.connect(func(): upgrade_panel.visible = false)
 	$UI/LogPanel/VBox/TitleRow/CloseBtn.pressed.connect(func(): log_panel.visible = false)
 	$UI/ActionBar/EngineRoomButton.pressed.connect(_toggle_engine_room)
 	$UI/EngineRoomPanel/VBox/TitleRow/CloseBtn.pressed.connect(func(): engine_room_panel.visible = false)
@@ -185,7 +182,6 @@ func _on_mine_toggled() -> void:
 		_map_open    = true
 		_map_hovered = -1
 		$UI/ActionBar/MineButton.text = "Avbryt"
-		upgrade_panel.visible     = false
 		log_panel.visible         = false
 		engine_room_panel.visible = false
 		queue_redraw()
@@ -552,77 +548,10 @@ func _on_launch() -> void:
 	SaveManager.save_game()
 	get_tree().change_scene_to_file("res://scenes/map/Map.tscn")
 
-# ── Oppgraderingspanel (#3) ───────────────────────────────────
-func _toggle_upgrade_panel() -> void:
-	upgrade_panel.visible = not upgrade_panel.visible
-	if upgrade_panel.visible:
-		log_panel.visible = false
-		_refresh_upgrade_panel()
-
-func _refresh_upgrade_panel() -> void:
-	var vbox := upgrade_panel.get_node("VBox")
-	for child in vbox.get_children():
-		if child.name != "TitleRow":
-			child.queue_free()
-
-	var d  := SaveManager.game_data
-	var cr : int = d.get("credits", 0)
-
-	var upgrades := [
-		{"key": "drill_upgraded",  "label": "Raskere drill  (2s intervall)", "cost": 1500},
-		{"key": "extra_tank",      "label": "3. mineraltank",                 "cost": 2000},
-		{"key": "bigger_tanks",    "label": "Større tanker  (100 kap)",       "cost": 3000},
-		{"key": "ground_scanner",  "label": "Grunnskanner  (avslører soner)", "cost": 8000},
-	]
-	for upg in upgrades:
-		var row  := HBoxContainer.new()
-		var lbl  := Label.new()
-		var btn  := Button.new()
-		var done : bool = d.get(upg["key"], false)
-		lbl.text = "  %s  –  %d kr" % [upg["label"], upg["cost"]]
-		lbl.custom_minimum_size = Vector2(290, 0)
-		lbl.add_theme_font_size_override("font_size", 12)
-		if done:
-			lbl.add_theme_color_override("font_color", Color(0.5, 0.9, 0.5))
-		elif cr < upg["cost"]:
-			lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
-		btn.text     = "Kjøpt ✓" if done else "Kjøp"
-		btn.disabled = done or cr < upg["cost"]
-		var key  : String = upg["key"]
-		var cost : int    = upg["cost"]
-		btn.pressed.connect(func() -> void: _buy_upgrade(key, cost))
-		row.add_child(lbl)
-		row.add_child(btn)
-		vbox.add_child(row)
-
-func _buy_upgrade(key: String, cost: int) -> void:
-	var d := SaveManager.game_data
-	if d.get("credits", 0) < cost:
-		return
-	d["credits"] -= cost
-	d[key] = true
-	if key == "extra_tank":
-		var tanks : Array = d.get("tanks", [])
-		tanks.append({"mineral_id": "", "amount": 0, "capacity": 50})
-		d["tanks"] = tanks
-	elif key == "bigger_tanks":
-		for tank in d.get("tanks", []):
-			tank["capacity"] = 100
-	elif key == "drill_upgraded":
-		_update_mine_timer()
-		if _mining_active:
-			mine_timer.start()
-	SoundManager.play("kaching")
-	SaveManager.save_game()
-	_refresh_ui()
-	_refresh_upgrade_panel()
-	_set_status("Oppgradering fullført!")
-
 # ── Loggpanel (#15) ──────────────────────────────────────────
 func _toggle_log_panel() -> void:
 	log_panel.visible = not log_panel.visible
 	if log_panel.visible:
-		upgrade_panel.visible = false
 		_refresh_log_panel()
 
 func _refresh_log_panel() -> void:
@@ -646,8 +575,7 @@ func _refresh_log_panel() -> void:
 func _toggle_engine_room() -> void:
 	engine_room_panel.visible = not engine_room_panel.visible
 	if engine_room_panel.visible:
-		upgrade_panel.visible = false
-		log_panel.visible     = false
+		log_panel.visible = false
 		_refresh_engine_room()
 
 func _refresh_engine_room() -> void:

@@ -62,8 +62,14 @@ const ORDER_CATALOG := [
 	{"id": "nav_upg2",        "name": "Navigasjon – Nivå 2",
 	 "desc": "Bedre navigasjonsytelse",    "cost": 2500,  "days": 2,
 	 "type": "comp_upg", "comp_id": "navigation",   "new_level": 2},
-	# ── Ekstra last ─────────────────────────────────────────────
-	{"id": "extra_tank_order", "name": "Ekstra mineraltank (levert)",
+	# ── Skipoppgraderinger ──────────────────────────────────────
+	{"id": "drill_upgraded",  "name": "Raskere drill",
+	 "desc": "Halverer mine-intervall (2s)","cost": 1500,  "days": 1, "type": "upgrade"},
+	{"id": "bigger_tanks",    "name": "Større tanker",
+	 "desc": "Alle tanker økes til 100 kap","cost": 3000,  "days": 2, "type": "upgrade"},
+	{"id": "ground_scanner",  "name": "Grunnskanner",
+	 "desc": "90 % nøyaktighet på gruvekart","cost": 8000, "days": 3, "type": "upgrade"},
+	{"id": "extra_tank_order","name": "Ekstra mineraltank",
 	 "desc": "3. tank, 50 kap",            "cost": 2000,  "days": 3, "type": "upgrade"},
 ]
 
@@ -250,6 +256,8 @@ func _refresh_order_panel() -> void:
 					break
 		elif iid == "extra_tank_order":
 			already_have = d.get("extra_tank", false)
+		elif item["type"] == "upgrade":
+			already_have = d.get(iid, false)
 
 		if already_have:
 			info.text = "%s – %s" % [item["name"], item["desc"]]

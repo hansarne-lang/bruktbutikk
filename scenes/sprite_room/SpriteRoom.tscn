@@ -69,7 +69,15 @@ text = "🚀 Kart / Reis"
 
 [node name="HintLabel" type="Label" parent="UI"]
 position = Vector2(10, 555)
-text = "A/D eller ← → for å gå  •  E for å interagere"
+text = "A/D: gå   •   E: interager   •   Motorrom-luke: venstre side"
+theme_override_font_sizes/font_size = 13
+
+[node name="EngineRoomPrompt" type="PanelContainer" parent="UI"]
+position = Vector2(10, 330)
+visible = false
+
+[node name="EngineRoomLabel" type="Label" parent="UI/EngineRoomPrompt"]
+text = "  [E]  Gå inn i Motorrom"
 theme_override_font_sizes/font_size = 13
 
 [node name="InteractPrompt" type="PanelContainer" parent="UI"]

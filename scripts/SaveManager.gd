@@ -44,6 +44,9 @@ func new_game() -> void:
 		"repair_skill":    0.0,
 		"repair_tools":    [],
 		"pending_orders":  [],
+		# Skip-lasterom
+		"ship_cargo":          [],
+		"ship_cargo_capacity": 40,
 	}
 
 func save_game() -> void:
@@ -89,10 +92,12 @@ func load_game() -> bool:
 	if not game_data.has("current_zone"):     game_data["current_zone"]     = ""
 	if not game_data.has("ground_scanner"):   game_data["ground_scanner"]   = false
 	if not game_data.has("drill_sites"):      game_data["drill_sites"]      = _gen_drill_sites()
-	if not game_data.has("ship_components"):  game_data["ship_components"]  = _default_ship_components()
-	if not game_data.has("repair_skill"):     game_data["repair_skill"]     = 0.0
-	if not game_data.has("repair_tools"):     game_data["repair_tools"]     = []
-	if not game_data.has("pending_orders"):   game_data["pending_orders"]   = []
+	if not game_data.has("ship_components"):      game_data["ship_components"]      = _default_ship_components()
+	if not game_data.has("repair_skill"):         game_data["repair_skill"]         = 0.0
+	if not game_data.has("repair_tools"):         game_data["repair_tools"]         = []
+	if not game_data.has("pending_orders"):       game_data["pending_orders"]       = []
+	if not game_data.has("ship_cargo"):           game_data["ship_cargo"]           = []
+	if not game_data.has("ship_cargo_capacity"):  game_data["ship_cargo_capacity"]  = 40
 	return true
 
 func _gen_drill_sites() -> Array:
@@ -134,6 +139,86 @@ func empty_tanks() -> void:
 	for tank in game_data.get("tanks", []):
 		tank["mineral_id"] = ""
 		tank["amount"]     = 0
+
+## ── Skip-lasterom ────────────────────────────────────────────────
+
+## Totalt antall enheter om bord i skipet
+func get_ship_cargo_used() -> int:
+	var total : int = 0
+	for item in game_data.get("ship_cargo", []):
+		total += item.get("amount", 0)
+	return total
+
+## Prøv å laste mineral fra gruve-tanker til skipets lasterom.
+## Returnerer faktisk lastet antall.
+func load_to_ship_cargo(mineral_id: String, amount: int) -> int:
+	if mineral_id == "" or amount <= 0:
+		return 0
+	var cap   : int   = game_data.get("ship_cargo_capacity", 40)
+	var used  : int   = get_ship_cargo_used()
+	var space : int   = max(0, cap - used)
+	var load  : int   = min(amount, space)
+	if load <= 0:
+		return 0
+	# Finn / opprett plass i ship_cargo
+	var cargo : Array = game_data.get("ship_cargo", [])
+	var found : bool  = false
+	for item in cargo:
+		if item.get("mineral_id", "") == mineral_id:
+			item["amount"] += load
+			found = true
+			break
+	if not found:
+		cargo.append({"mineral_id": mineral_id, "amount": load})
+		game_data["ship_cargo"] = cargo
+	# Trekk fra gruve-tankene
+	_remove_from_tanks(mineral_id, load)
+	return load
+
+## Flytt mineral tilbake fra skip-lasterom til gruve-tanker
+func unload_from_ship_cargo(mineral_id: String) -> void:
+	var cargo : Array = game_data.get("ship_cargo", [])
+	for i in cargo.size():
+		if cargo[i].get("mineral_id", "") != mineral_id:
+			continue
+		var amt   : int   = cargo[i].get("amount", 0)
+		var tanks : Array = game_data.get("tanks", [])
+		# Prøv eksisterende tank
+		for tank in tanks:
+			if tank.get("mineral_id", "") == mineral_id:
+				var space : int = tank.get("capacity", 50) - tank.get("amount", 0)
+				var put   : int = min(amt, space)
+				tank["amount"] += put
+				amt -= put
+				break
+		# Prøv tom tank
+		if amt > 0:
+			for tank in tanks:
+				if tank.get("mineral_id", "") == "" or tank.get("amount", 0) == 0:
+					tank["mineral_id"] = mineral_id
+					tank["amount"]     = amt
+					amt = 0
+					break
+		cargo.remove_at(i)
+		break
+	game_data["ship_cargo"] = cargo
+
+## Trekk ut antall fra gruve-tankene (intern hjelpefunksjon)
+func _remove_from_tanks(mineral_id: String, amount: int) -> void:
+	var tanks : Array = game_data.get("tanks", [])
+	var rem   : int   = amount
+	for tank in tanks:
+		if tank.get("mineral_id", "") == mineral_id and rem > 0:
+			var take : int = min(tank.get("amount", 0), rem)
+			tank["amount"] -= take
+			rem            -= take
+			if tank["amount"] <= 0:
+				tank["mineral_id"] = ""
+				tank["amount"]     = 0
+
+## Tøm skip-lasterom etter salg
+func empty_ship_cargo() -> void:
+	game_data["ship_cargo"] = []
 
 ## ── Motorrom ─────────────────────────────────────────────────────
 

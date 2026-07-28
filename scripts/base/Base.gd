@@ -34,6 +34,9 @@ var _map_hovered : int   = -1
 # ── Overflow ─────────────────────────────────────────────────────
 var _pending_mineral : String = ""   # mineral som ikke fikk plass
 
+# ── Skip-lasterom ────────────────────────────────────────────────
+var _cargo_panel_open : bool   = false
+
 # ── Motorrom / Reparasjon ─────────────────────────────────────────
 var _repair_active    : bool   = false
 var _repair_target_id : String = ""
@@ -96,6 +99,8 @@ func _ready() -> void:
 	$UI/LogPanel/VBox/TitleRow/CloseBtn.pressed.connect(func(): log_panel.visible = false)
 	$UI/ActionBar/EngineRoomButton.pressed.connect(_toggle_engine_room)
 	$UI/EngineRoomPanel/VBox/TitleRow/CloseBtn.pressed.connect(func(): engine_room_panel.visible = false)
+	$CargoLayer/CargoPanel/VBox/BtnRow/CancelBtn.pressed.connect(_close_cargo_panel)
+	$CargoLayer/CargoPanel/VBox/BtnRow/BoardBtn.pressed.connect(_depart_to_ship)
 
 	# Sjekk om bestilte varer er ankommet
 	var delivered : Array = SaveManager.check_and_deliver_orders()
@@ -415,8 +420,128 @@ func _show_credit_popup(amount: int, trader: String) -> void:
 
 # ── Navigasjon ───────────────────────────────────────────────
 func _on_enter_ship() -> void:
+	# Vis lastepanel før avreise
+	_open_cargo_panel()
+
+# ── Skip-lasterom ─────────────────────────────────────────────
+func _open_cargo_panel() -> void:
+	_cargo_panel_open = true
+	$CargoLayer/CargoBg.visible    = true
+	$CargoLayer/CargoPanel.visible = true
+	_refresh_cargo_panel()
+
+func _close_cargo_panel() -> void:
+	_cargo_panel_open = false
+	$CargoLayer/CargoBg.visible    = false
+	$CargoLayer/CargoPanel.visible = false
+
+func _depart_to_ship() -> void:
+	_close_cargo_panel()
 	SaveManager.save_game()
 	get_tree().change_scene_to_file("res://scenes/sprite_room/SpriteRoom.tscn")
+
+func _refresh_cargo_panel() -> void:
+	var cap    : int   = SaveManager.game_data.get("ship_cargo_capacity", 40)
+	var used   : int   = SaveManager.get_ship_cargo_used()
+	var space  : int   = cap - used
+	var cargo  : Array = SaveManager.game_data.get("ship_cargo", [])
+	var tanks  : Array = SaveManager.game_data.get("tanks", [])
+
+	# Kapasitetsbar
+	var cap_lbl := $CargoLayer/CargoPanel/VBox/CapacityLabel as Label
+	var cap_bar := $CargoLayer/CargoPanel/VBox/CapBar as ProgressBar
+	cap_lbl.text  = "Lasterom: %d / %d enheter" % [used, cap]
+	cap_bar.value = float(used) / float(cap) * 100.0
+
+	# ── Gruve-tanker ──────────────────────────────────────────
+	var tank_rows := $CargoLayer/CargoPanel/VBox/TankRows
+	for child in tank_rows.get_children():
+		child.queue_free()
+
+	var any_in_tanks : bool = false
+	for tank in tanks:
+		var mid : String = tank.get("mineral_id", "")
+		var amt : int    = tank.get("amount", 0)
+		if mid == "" or amt == 0:
+			continue
+		any_in_tanks = true
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
+
+		var info := Label.new()
+		info.text = "%s  ×%d" % [_mineral_name(mid), amt]
+		info.custom_minimum_size = Vector2(300, 0)
+		info.add_theme_font_size_override("font_size", 13)
+
+		var load_all := Button.new()
+		load_all.text = "Last inn alt  →"
+		load_all.disabled = space <= 0
+		var m : String = mid
+		var a : int    = amt
+		load_all.pressed.connect(func() -> void:
+			var loaded : int = SaveManager.load_to_ship_cargo(m, a)
+			if loaded > 0:
+				_refresh_cargo_panel()
+				_refresh_ui())
+
+		var load_half := Button.new()
+		load_half.text = "Last inn halvpart"
+		load_half.disabled = space <= 0 or amt <= 1
+		load_half.pressed.connect(func() -> void:
+			var loaded : int = SaveManager.load_to_ship_cargo(m, max(1, a / 2))
+			if loaded > 0:
+				_refresh_cargo_panel()
+				_refresh_ui())
+
+		row.add_child(info)
+		row.add_child(load_all)
+		row.add_child(load_half)
+		tank_rows.add_child(row)
+
+	if not any_in_tanks:
+		var empty_lbl := Label.new()
+		empty_lbl.text = "(Ingen mineraler i gruve-tanker)"
+		empty_lbl.add_theme_font_size_override("font_size", 12)
+		empty_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
+		tank_rows.add_child(empty_lbl)
+
+	# ── Skip-lasterom ─────────────────────────────────────────
+	var cargo_rows := $CargoLayer/CargoPanel/VBox/CargoRows
+	for child in cargo_rows.get_children():
+		child.queue_free()
+
+	if cargo.is_empty():
+		var empty_lbl2 := Label.new()
+		empty_lbl2.text = "(Ingenting lastet enda)"
+		empty_lbl2.add_theme_font_size_override("font_size", 12)
+		empty_lbl2.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
+		cargo_rows.add_child(empty_lbl2)
+	else:
+		for item in cargo:
+			var mid : String = item.get("mineral_id", "")
+			var amt : int    = item.get("amount", 0)
+			if mid == "" or amt == 0:
+				continue
+			var row := HBoxContainer.new()
+			row.add_theme_constant_override("separation", 12)
+
+			var info := Label.new()
+			info.text = "%s  ×%d" % [_mineral_name(mid), amt]
+			info.custom_minimum_size = Vector2(300, 0)
+			info.add_theme_font_size_override("font_size", 13)
+			info.add_theme_color_override("font_color", Color(0.5, 1.0, 0.6))
+
+			var unload_btn := Button.new()
+			unload_btn.text = "Fjern"
+			var m : String = mid
+			unload_btn.pressed.connect(func() -> void:
+				SaveManager.unload_from_ship_cargo(m)
+				_refresh_cargo_panel()
+				_refresh_ui())
+
+			row.add_child(info)
+			row.add_child(unload_btn)
+			cargo_rows.add_child(row)
 
 func _on_launch() -> void:
 	if SaveManager.total_minerals() == 0:

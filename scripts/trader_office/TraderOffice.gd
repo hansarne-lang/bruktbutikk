@@ -30,13 +30,13 @@ var _td      : Dictionary = {}
 @onready var trader_lbl  : Label  = $UI/TraderLabel
 @onready var greeting_lbl: Label  = $UI/GreetingLabel
 @onready var offer_lbl   : Label  = $UI/OfferLabel
-@onready var cargo_lbl   : Label  = $UI/CargoLabel
-@onready var sell_btn    : Button = $UI/ButtonPanel/SellButton
-@onready var home_btn    : Button = $UI/ButtonPanel/HomeButton
-@onready var travel_btn  : Button = $UI/ButtonPanel/TravelButton
-@onready var order_btn   : Button = $UI/ButtonPanel/OrderButton
-@onready var order_panel           = $UI/OrderPanel
-@onready var catalog_vbox          = $UI/OrderPanel/VBox/Scroll/CatalogVBox
+@onready var cargo_rows            = $UI/CargoPanel/CargoVBox/CargoScroll/CargoRows
+@onready var sell_all_btn: Button  = $UI/CargoPanel/CargoVBox/SellAllBtn
+@onready var home_btn    : Button  = $UI/ButtonPanel/HomeButton
+@onready var travel_btn  : Button  = $UI/ButtonPanel/TravelButton
+@onready var order_btn   : Button  = $UI/ButtonPanel/OrderButton
+@onready var order_panel            = $UI/OrderPanel
+@onready var catalog_vbox           = $UI/OrderPanel/VBox/Scroll/CatalogVBox
 
 const ORDER_CATALOG := [
 	# ── Reparasjonsverktøy ──────────────────────────────────────
@@ -73,16 +73,11 @@ func _ready() -> void:
 
 	trader_lbl.text   = _td["name"]
 	greeting_lbl.text = "\"" + _td["greeting"] + "\""
+	offer_lbl.text    = "Kjøpspris: %d%% av baseverdi" % int(_td["multiplier"] * 100)
 
-	var earned : int = _calculate_earnings(_td["multiplier"])
-	if earned > 0:
-		offer_lbl.text = "Tilbud:  %d  kreditter  (%d%% av baseverdi)" % [earned, int(_td["multiplier"] * 100)]
-	else:
-		offer_lbl.text = "Du har ingenting å selge."
+	_refresh_cargo_rows()
 
-	_refresh_cargo()
-
-	sell_btn.pressed.connect(_sell)
+	sell_all_btn.pressed.connect(_sell_all)
 	home_btn.pressed.connect(_go_home)
 	travel_btn.pressed.connect(_go_map)
 	order_btn.pressed.connect(_toggle_order_panel)
@@ -92,37 +87,91 @@ func _process(delta: float) -> void:
 	_time += delta
 	queue_redraw()
 
-func _calculate_earnings(multiplier: float) -> int:
-	var tanks  : Array = SaveManager.game_data.get("tanks", [])
-	var earned : int   = 0
-	for tank in tanks:
-		var mid : String = tank.get("mineral_id", "")
-		var amt : int    = tank.get("amount", 0)
+## Beregn verdi av ett mineral fra ship_cargo
+func _item_value(mineral_id: String, amount: int) -> int:
+	var val : int = int(DataLoader.get_mineral(mineral_id).get("base_value", 0))
+	return int(float(val) * float(amount) * _td["multiplier"])
+
+## Oppfrisk cargo-radene med per-mineral selg-knapper
+func _refresh_cargo_rows() -> void:
+	for child in cargo_rows.get_children():
+		child.queue_free()
+
+	var cargo : Array = SaveManager.game_data.get("ship_cargo", [])
+	var total : int   = 0
+
+	if cargo.is_empty():
+		var empty_lbl := Label.new()
+		empty_lbl.text = "(Lasterom er tomt – last mineraler om bord fra basen)"
+		empty_lbl.add_theme_font_size_override("font_size", 13)
+		empty_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
+		cargo_rows.add_child(empty_lbl)
+		sell_all_btn.disabled = true
+		return
+
+	for item in cargo:
+		var mid : String = item.get("mineral_id", "")
+		var amt : int    = item.get("amount",     0)
 		if mid == "" or amt == 0:
 			continue
-		var val : int = int(DataLoader.get_mineral(mid).get("base_value", 0))
-		earned += int(float(val) * float(amt) * multiplier)
-	return earned
+		var val : int = _item_value(mid, amt)
+		total        += val
 
-func _refresh_cargo() -> void:
-	var tanks : Array = SaveManager.game_data.get("tanks", [])
-	var lines : PackedStringArray = []
-	for t in tanks:
-		var mid  : String = t.get("mineral_id", "")
-		var amt  : int    = t.get("amount", 0)
-		if mid != "" and amt > 0:
-			var mname : String = DataLoader.get_mineral(mid).get("name", mid)
-			var val   : int    = int(DataLoader.get_mineral(mid).get("base_value", 0))
-			var total : int    = int(float(val) * float(amt) * _td["multiplier"])
-			lines.append("  %s  ×%d  →  %d kr" % [mname, amt, total])
-	if lines.is_empty():
-		cargo_lbl.text   = "Lasterom: tomt"
-		sell_btn.disabled = true
-	else:
-		cargo_lbl.text = "Din last:\n" + "\n".join(lines)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
 
-func _sell() -> void:
-	var earned : int = _calculate_earnings(_td["multiplier"])
+		var info := Label.new()
+		info.text = "%s  ×%d  →  %d kr" % [
+			DataLoader.get_mineral(mid).get("name", mid), amt, val]
+		info.custom_minimum_size = Vector2(500, 0)
+		info.add_theme_font_size_override("font_size", 13)
+		info.add_theme_color_override("font_color", Color(0.85, 0.95, 0.75))
+
+		var sell_btn := Button.new()
+		sell_btn.text = "Selg"
+		sell_btn.custom_minimum_size = Vector2(80, 0)
+		var m : String = mid
+		var v : int    = val
+		sell_btn.pressed.connect(func() -> void: _sell_item(m, v))
+
+		row.add_child(info)
+		row.add_child(sell_btn)
+		cargo_rows.add_child(row)
+
+	# Totallinje
+	var total_lbl := Label.new()
+	total_lbl.text = "Totalverdi:  %d kr" % total
+	total_lbl.add_theme_font_size_override("font_size", 14)
+	total_lbl.add_theme_color_override("font_color", Color(1.0, 0.88, 0.3))
+	cargo_rows.add_child(total_lbl)
+
+	sell_all_btn.disabled = false
+
+## Selg ett mineral
+func _sell_item(mineral_id: String, value: int) -> void:
+	SaveManager.game_data["credits"] = SaveManager.game_data.get("credits", 0) + value
+	var cargo : Array = SaveManager.game_data.get("ship_cargo", [])
+	for i in cargo.size():
+		if cargo[i].get("mineral_id", "") == mineral_id:
+			cargo.remove_at(i)
+			break
+	SaveManager.game_data["ship_cargo"] = cargo
+	SoundManager.play("kaching")
+	var mname : String = DataLoader.get_mineral(mineral_id).get("name", mineral_id)
+	greeting_lbl.text = "\"+%d kr for %s!\"" % [value, mname]
+	offer_lbl.text    = "Kjøpspris: %d%% av baseverdi  ·  +%d kr" % [int(_td["multiplier"] * 100), value]
+	SaveManager.save_game()
+	_refresh_cargo_rows()
+	_maybe_show_depart_options()
+
+## Selg alt i lasterom
+func _sell_all() -> void:
+	var cargo  : Array = SaveManager.game_data.get("ship_cargo", [])
+	var earned : int   = 0
+	for item in cargo:
+		earned += _item_value(item.get("mineral_id", ""), item.get("amount", 0))
+	if earned == 0:
+		return
 	SaveManager.game_data["credits"]     = SaveManager.game_data.get("credits", 0) + earned
 	SaveManager.game_data["trades_done"] = SaveManager.game_data.get("trades_done", 0) + 1
 	SaveManager.game_data["day"]         = SaveManager.game_data.get("day", 1) + 1
@@ -130,16 +179,20 @@ func _sell() -> void:
 	SaveManager.game_data["last_earned"] = earned
 	SaveManager.game_data["last_trader"] = _td["name"]
 	SaveManager.add_trade_log(earned, _td["name"])
-	SaveManager.empty_tanks()
+	SaveManager.empty_ship_cargo()
 	SaveManager.save_game()
 	SoundManager.play("kaching")
-	# Vis valg istedenfor å navigere bort med en gang
-	sell_btn.disabled = true
-	sell_btn.text     = "✓ Solgt!"
-	offer_lbl.text    = "Salg fullført!  +%d kreditter" % earned
-	greeting_lbl.text = "\"%s\"" % _td.get("farewell", "Takk for handelen – kom gjerne igjen!")
-	home_btn.text     = "🏠 Reis hjem"
-	travel_btn.visible = true
+	offer_lbl.text    = "Salg fullfort!  +%d kreditter" % earned
+	greeting_lbl.text = "\"%s\"" % _td.get("farewell", "Takk for handelen!")
+	sell_all_btn.disabled = true
+	_refresh_cargo_rows()
+	_maybe_show_depart_options()
+
+func _maybe_show_depart_options() -> void:
+	var cargo : Array = SaveManager.game_data.get("ship_cargo", [])
+	if cargo.is_empty():
+		home_btn.text      = "Reis hjem"
+		travel_btn.visible = true
 
 func _go_home() -> void:
 	SaveManager.save_game()

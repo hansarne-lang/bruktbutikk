@@ -31,22 +31,38 @@ horizontal_alignment = 1
 theme_override_font_sizes/font_size = 17
 theme_override_colors/font_color = Color(1.0, 0.88, 0.3, 1)
 
-[node name="CargoLabel" type="Label" parent="UI"]
-position = Vector2(60, 140)
-custom_minimum_size = Vector2(500, 100)
-text = ""
+[node name="CargoPanel" type="PanelContainer" parent="UI"]
+position = Vector2(40, 130)
+custom_minimum_size = Vector2(820, 0)
+
+[node name="CargoVBox" type="VBoxContainer" parent="UI/CargoPanel"]
+theme_override_constants/separation = 8
+
+[node name="CargoTitle" type="Label" parent="UI/CargoPanel/CargoVBox"]
+layout_mode = 2
+text = "Lasterom om bord:"
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.6, 0.8, 1.0, 1)
+
+[node name="CargoScroll" type="ScrollContainer" parent="UI/CargoPanel/CargoVBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(800, 130)
+
+[node name="CargoRows" type="VBoxContainer" parent="UI/CargoPanel/CargoVBox/CargoScroll"]
+layout_mode = 2
+custom_minimum_size = Vector2(780, 0)
+theme_override_constants/separation = 6
+
+[node name="SellAllBtn" type="Button" parent="UI/CargoPanel/CargoVBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(300, 36)
+text = "Selg alt"
 theme_override_font_sizes/font_size = 14
-theme_override_colors/font_color = Color(0.7, 0.88, 0.7, 1)
 
 [node name="ButtonPanel" type="VBoxContainer" parent="UI"]
 position = Vector2(900, 150)
 custom_minimum_size = Vector2(320, 0)
 theme_override_constants/separation = 14
-
-[node name="SellButton" type="Button" parent="UI/ButtonPanel"]
-custom_minimum_size = Vector2(320, 56)
-text = "Selg alt"
-theme_override_font_sizes/font_size = 18
 
 [node name="HomeButton" type="Button" parent="UI/ButtonPanel"]
 custom_minimum_size = Vector2(320, 40)

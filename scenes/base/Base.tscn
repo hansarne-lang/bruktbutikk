@@ -252,6 +252,76 @@ theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0.6, 1.0, 0.6, 1)
 visible = false
 
+[node name="CargoLayer" type="CanvasLayer" parent="."]
+layer = 9
+
+[node name="CargoBg" type="ColorRect" parent="CargoLayer"]
+position = Vector2(0, 0)
+size = Vector2(1280, 720)
+color = Color(0.0, 0.0, 0.0, 0.75)
+visible = false
+mouse_filter = 0
+
+[node name="CargoPanel" type="PanelContainer" parent="CargoLayer"]
+position = Vector2(200, 80)
+custom_minimum_size = Vector2(880, 0)
+visible = false
+
+[node name="VBox" type="VBoxContainer" parent="CargoLayer/CargoPanel"]
+theme_override_constants/separation = 10
+
+[node name="TitleLabel" type="Label" parent="CargoLayer/CargoPanel/VBox"]
+layout_mode = 2
+text = "Last skipets lasterom"
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.6, 0.8, 1.0, 1)
+
+[node name="CapacityLabel" type="Label" parent="CargoLayer/CargoPanel/VBox"]
+layout_mode = 2
+text = "Lasterom: 0 / 40 enheter"
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(1.0, 0.88, 0.3, 1)
+
+[node name="CapBar" type="ProgressBar" parent="CargoLayer/CargoPanel/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(840, 18)
+value = 0.0
+max_value = 100.0
+
+[node name="TankTitle" type="Label" parent="CargoLayer/CargoPanel/VBox"]
+layout_mode = 2
+text = "Mineraler i gruve-tanker:"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+
+[node name="TankRows" type="VBoxContainer" parent="CargoLayer/CargoPanel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="CargoTitle" type="Label" parent="CargoLayer/CargoPanel/VBox"]
+layout_mode = 2
+text = "Lastet om bord:"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+
+[node name="CargoRows" type="VBoxContainer" parent="CargoLayer/CargoPanel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="BtnRow" type="HBoxContainer" parent="CargoLayer/CargoPanel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="CancelBtn" type="Button" parent="CargoLayer/CargoPanel/VBox/BtnRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(180, 40)
+text = "Avbryt"
+
+[node name="BoardBtn" type="Button" parent="CargoLayer/CargoPanel/VBox/BtnRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(260, 40)
+text = "Gå om bord"
+
 [node name="OverflowLayer" type="CanvasLayer" parent="."]
 layer = 10
 

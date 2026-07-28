@@ -125,9 +125,6 @@ func _close_terminal() -> void:
 	terminal.visible = false
 
 func _on_map() -> void:
-	if SaveManager.total_minerals() == 0:
-		# Ingen last – vis advarsel i terminalen hvis den er lukket, ellers bare beep
-		return
 	SaveManager.save_game()
 	get_tree().change_scene_to_file("res://scenes/map/Map.tscn")
 

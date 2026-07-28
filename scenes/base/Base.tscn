@@ -152,7 +152,7 @@ text = "Start mining"
 [node name="ShipButton" type="Button" parent="UI/ActionBar"]
 layout_mode = 2
 custom_minimum_size = Vector2(140, 36)
-text = "Gaa om bord"
+text = "Gå om bord"
 
 [node name="UpgradeButton" type="Button" parent="UI/ActionBar"]
 layout_mode = 2

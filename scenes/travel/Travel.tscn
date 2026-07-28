@@ -50,7 +50,7 @@ theme_override_font_sizes/font_size = 14
 
 [node name="EventButton" type="Button" parent="UI/EventPanel/EventVBox"]
 custom_minimum_size = Vector2(200, 36)
-text = "Forstatt"
+text = "Fortsett"
 
 [node name="ButtonPanel" type="VBoxContainer" parent="UI"]
 position = Vector2(490, 430)

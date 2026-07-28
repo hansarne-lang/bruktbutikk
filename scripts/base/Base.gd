@@ -107,7 +107,7 @@ func _on_mine_toggled() -> void:
 	if _mining_active:
 		mine_timer.start()
 		$UI/ActionBar/MineButton.text = "Stopp mining"
-		_set_status("Gruvedrift paabegynt – utvinner %s" % _mineral_name(_current_mineral))
+		_set_status("Gruvedrift påbegynt – utvinner %s" % _mineral_name(_current_mineral))
 	else:
 		mine_timer.stop()
 		$UI/ActionBar/MineButton.text = "Start mining"
@@ -125,7 +125,7 @@ func _on_mine_tick() -> void:
 		mine_timer.stop()
 		_mining_active = false
 		$UI/ActionBar/MineButton.text = "Start mining"
-		_set_status("Alle tanker er fulle! Reis til en trader for aa selge.")
+		_set_status("Alle tanker er fulle! Gå om bord og reis til en trader for å selge.")
 
 func _spawn_particles(x: float, y: float) -> void:
 	var colors := ["CC8833", "FFDD44", "AADDFF", "88CCFF", "4488FF", "AAFFAA"]
@@ -162,7 +162,7 @@ func _on_enter_ship() -> void:
 
 func _on_launch() -> void:
 	if SaveManager.total_minerals() == 0:
-		_set_status("Ingen mineraler aa selge – start mining foerst.")
+		_set_status("Ingen mineraler å selge – start mining først.")
 		return
 	SaveManager.save_game()
 	get_tree().change_scene_to_file("res://scenes/map/Map.tscn")
@@ -186,7 +186,7 @@ func _refresh_upgrade_panel() -> void:
 	var upgrades := [
 		{"key": "drill_upgraded", "label": "Raskere drill  (2s intervall)", "cost": 1500},
 		{"key": "extra_tank",     "label": "3. mineraltank",                "cost": 2000},
-		{"key": "bigger_tanks",   "label": "Storere tanker  (100 kap)",     "cost": 3000},
+		{"key": "bigger_tanks",   "label": "Større tanker  (100 kap)",      "cost": 3000},
 	]
 	for upg in upgrades:
 		var row  := HBoxContainer.new()
@@ -200,7 +200,7 @@ func _refresh_upgrade_panel() -> void:
 			lbl.add_theme_color_override("font_color", Color(0.5, 0.9, 0.5))
 		elif cr < upg["cost"]:
 			lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
-		btn.text     = "Kjopt ✓" if done else "Kjop"
+		btn.text     = "Kjøpt ✓" if done else "Kjøp"
 		btn.disabled = done or cr < upg["cost"]
 		var key  : String = upg["key"]
 		var cost : int    = upg["cost"]
@@ -230,7 +230,7 @@ func _buy_upgrade(key: String, cost: int) -> void:
 	SaveManager.save_game()
 	_refresh_ui()
 	_refresh_upgrade_panel()
-	_set_status("Oppgradering fullfort!")
+	_set_status("Oppgradering fullført!")
 
 # ── Loggpanel (#15) ──────────────────────────────────────────
 func _toggle_log_panel() -> void:

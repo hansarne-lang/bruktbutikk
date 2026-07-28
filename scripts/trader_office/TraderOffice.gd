@@ -43,7 +43,7 @@ func _ready() -> void:
 	if earned > 0:
 		offer_lbl.text = "Tilbud:  %d  kreditter  (%d%% av baseverdi)" % [earned, int(_td["multiplier"] * 100)]
 	else:
-		offer_lbl.text = "Du har ingenting aa selge."
+		offer_lbl.text = "Du har ingenting å selge."
 
 	_refresh_cargo()
 

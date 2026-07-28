@@ -38,7 +38,7 @@ func new_game() -> void:
 func save_game() -> void:
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:
-		push_error("SaveManager: Kunne ikke aapne fil for skriving")
+		push_error("SaveManager: Kunne ikke åpne fil for skriving")
 		return
 	file.store_string(JSON.stringify(game_data, "\t"))
 	file.close()

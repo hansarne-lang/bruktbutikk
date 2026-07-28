@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Void Miner – Mineralhåndbok</title>
+<style>
+  :root {
+    --bg:       #08090f;
+    --surface:  #0e1020;
+    --border:   #1a2040;
+    --text:     #c8d8f0;
+    --muted:    #5a6880;
+    --accent:   #4488ff;
+    --gold:     #ffd700;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+
+  /* ── Header ────────────────────────────────── */
+  header {
+    background: linear-gradient(180deg, #0a0f28 0%, #080910 100%);
+    border-bottom: 2px solid var(--accent);
+    padding: 48px 40px 36px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 80% at 50% 120%, rgba(68,136,255,0.12) 0%, transparent 70%);
+  }
+  header h1 {
+    font-size: 2.6rem;
+    letter-spacing: 0.18em;
+    color: #fff;
+    text-shadow: 0 0 30px rgba(68,136,255,0.6);
+    position: relative;
+  }
+  header .sub {
+    margin-top: 10px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    font-size: 0.95rem;
+    position: relative;
+  }
+  header .tagline {
+    margin-top: 18px;
+    color: var(--muted);
+    font-size: 0.9rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+    position: relative;
+  }
+
+  /* ── Filter-bar ─────────────────────────────── */
+  .filterbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 28px 40px 0;
+    align-items: center;
+  }
+  .filterbar span { color: var(--muted); font-size: 0.85rem; margin-right: 4px; }
+  .filter-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    letter-spacing: 0.05em;
+    transition: all 0.15s;
+  }
+  .filter-btn:hover, .filter-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(68,136,255,0.08);
+  }
+
+  /* ── Rarity legend ──────────────────────────── */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 16px 40px 0;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+
+  /* ── Grid ───────────────────────────────────── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+    padding: 32px 40px 0;
+  }
+
+  /* ── Card ───────────────────────────────────── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0;
+    overflow: hidden;
+    transition: transform 0.15s, box-shadow 0.15s;
+    display: flex;
+    flex-direction: column;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  .card-top {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .mineral-gem {
+    width: 44px; height: 44px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+  }
+  .card-title h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 0.04em;
+  }
+  .card-title .cat-rarity {
+    margin-top: 3px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .badge {
+    font-size: 0.7rem;
+    padding: 2px 9px;
+    border-radius: 10px;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+  }
+  .rarity-badge { background: rgba(255,255,255,0.07); color: var(--muted); }
+
+  .card-body {
+    padding: 14px 20px 16px;
+    flex: 1;
+  }
+  .desc {
+    font-size: 0.88rem;
+    color: #a0b4cc;
+    line-height: 1.65;
+    margin-bottom: 14px;
+  }
+  .card-stats {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .stat-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .stat-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  .stat-value.credits::after { content: ' kr'; font-size: 0.75rem; font-weight: 400; color: var(--muted); }
+
+  .unlock-bar {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 0.78rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .unlock-icon { font-size: 0.85rem; }
+
+  /* ── Rarity colors ──────────────────────────── */
+  [data-rarity="common"]     { --rc: #78a07a; }
+  [data-rarity="uncommon"]   { --rc: #4a9edd; }
+  [data-rarity="rare"]       { --rc: #c070e0; }
+  [data-rarity="very_rare"]  { --rc: #e09030; }
+  [data-rarity="legendary"]  { --rc: #ffd700; }
+
+  .card[data-rarity] {
+    border-left: 3px solid var(--rc);
+  }
+  .rarity-badge { color: var(--rc) !important; background: rgba(0,0,0,0.3) !important; }
+  .legend-dot[data-rarity] { background: var(--rc); }
+
+  /* ── Section header ─────────────────────────── */
+  .section-label {
+    grid-column: 1 / -1;
+    color: var(--accent);
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    margin-top: 8px;
+  }
+
+  /* ── Footer ─────────────────────────────────── */
+  footer {
+    text-align: center;
+    padding: 40px 20px 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── Category icons ─────────────────────────── */
+  .cat-icon { font-size: 0.9rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>VOID MINER</h1>
+  <div class="sub">MINERALHÅNDBOK  ·  LUNA-7 MINING STATION</div>
+  <p class="tagline">
+    En komplett oversikt over alle 20 mineraler du kan utvinne på månen og i det dype rom.
+    Studér håndboken for å planlegge gruvedriften og maksimere inntjeningen.
+  </p>
+</header>
+
+<div class="filterbar">
+  <span>Filtrer:</span>
+  <button class="filter-btn active" onclick="filter('all', this)">Alle</button>
+  <button class="filter-btn" onclick="filter('common', this)">Vanlige</button>
+  <button class="filter-btn" onclick="filter('uncommon', this)">Uvanlige</button>
+  <button class="filter-btn" onclick="filter('rare', this)">Sjeldne</button>
+  <button class="filter-btn" onclick="filter('very_rare', this)">Svært sjeldne</button>
+  <button class="filter-btn" onclick="filter('legendary', this)">Legendariske</button>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" data-rarity="common"></div> Vanlig (fra dag 1)</div>
+  <div class="legend-item"><div class="legend-dot" data-rarity="uncommon"></div> Uvanlig (fra dag 3)</div>
+  <div class="legend-item"><div class="legend-dot" data-rarity="rare"></div> Sjelden (fra dag 7)</div>
+  <div class="legend-item"><div class="legend-dot" data-rarity="very_rare"></div> Svært sjelden (fra dag 14)</div>
+  <div class="legend-item"><div class="legend-dot" data-rarity="legendary"></div> Legendarisk (fra dag 25)</div>
+</div>
+
+<div class="grid" id="grid">
+
+<!-- ═══ VANLIGE ═══ -->
+
+<div class="card" data-rarity="common" data-cat="Metall">
+  <div class="card-top">
+    <div class="mineral-gem" style="background:#AA664422;border:2px solid #AA6644;">⬡</div>
+    <div class="card-title">
+      <h2>Ferroxite</h2>
+      <div class="cat-rarity">
+        <span class="badge" style="background:#1a1a2a;color:#888;">⚙ Metall</span>
+        <span class="badge rarity-badge" data-rarity="common">● VANLIG</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <p class="desc">Jernlignende forbindelse — robust og lett å bearbeide. Det mest grunnleggende råmaterialet på Luna-7, brukt i alt fra skrogplater til rørfittings. Lav verdi per enhet, men pålitelig tilgang fra dag én.</p>
+    <div class="card-stats">
+      <div class="stat"><div class="stat-label">Grunnverdi</div><div class="stat-value credits">280</div></div>
+      <div class="stat"><div class="stat-label">Kategori</div><div class="stat-value" style="font-size:0.9rem">Metall</div></div>
+    </div>
+    <div class="unlock-bar"><span class="unlock-icon">🔓</span> Tilgjengelig fra dag 1</div>
+  </div>
+</div>
+
+<div class="card" data-rarity="common" data-cat="Krystall">
+  <div class="card-top">
+    <div class="mineral-gem" style="background:#88CCFF22;border:2px solid #88CCFF;">💎</div>
+    <div class="card-title">
+      <h2>Glacite</h2>
+      <div class="cat-rarity">
+        <span class="badge" style="background:#1a1a2a;color:#888;">🔷 Krystall</span>
+        <span class="badge rarity-badge" data-rarity="common">● VANLIG</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <p class="desc">Iskrystallmineral som holder seg frossen selv over 400 grader. Dannet dypt under månens overflate der trykket er ekstremt høyt. Brukes i kjølesystemer og termoregulatorer ombord på skip.</p>
+    <div class="card-stats">
+      <div class="stat"><div class="stat-label">Grunnverdi</div><div class="stat-value credits">320</div></div>
+      <div class="stat"><div class="stat-label">Kategori</div><div class="stat-value" style="font-size:0.9rem">Krystall</div></div>
+    </div>
+    <div class="unlock-bar"><span class="unlock-icon">🔓</span> Tilgjengelig fra dag 1</div>
+  </div>
+</div>
+
+<div class="card" data-rarity="common" data-cat="Mineral">
+  <div class="card-top">
+    <div class="mineral-gem" style="background:#44556622;border:2px solid #445566;">🪨</div>
+    <div class="card-title">
+      <h2>Obsidite</h2>
+      <div class="cat-rarity">
+        <span class="badge" style="background:#1a1a2a;color:#888;">🪨 Mineral</span>
+        <span class="badge rarity-badge" data-rarity="common">● VANLIG</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <p class="desc">Sort vulkansk mineral fra månens tidlige geologiske epoke. Dannet da Luna-7 var geotermisk aktiv for milliarder av år siden. Brukes som varmeskjold og strukturfylling i koloni-bygg.</p>
+    <div class="card-stats">
+      <div class="stat"><div class="stat-label">Grunnverdi</div><div class="stat-value credits">380</div></div>
+      <div class="stat"><div class="stat-label">Kategori</div><div class="stat-value" style="font-size:0.9rem">Mineral</div></div>
+    </div>
+    <div class="unlock-bar"><span class="unlock-icon">🔓</span> Tilgjengelig fra dag 1</div>
+  </div>
+</div>
+
+<div class="card" data-rarity="common" data-cat="Mineral">
+  <div class="card-top">
+    <div class="mineral-gem" style="background:#FFDD4422;border:2px solid #FFDD44;">☀️</div>
+    <div class="card-title">
+      <h2>Solite</h2>
+      <div class="cat-rarity">
+        <span class="badge" style="background:#1a1a2a;color:#888;">🌕 Mineral</span>
+        <span class="badge rarity-badge" data-rarity="common">● VANLIG</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <p class="desc">Absorberer stråling og lagrer energi over tid. Gullgult mineral som finnes i overflatelaget av mange asteroider og måner. Et populært råmateriale for solcellepaneler i tidlige romkolonier.</p>
+    <div class="card-stats">
+      <div class="stat"><div class="stat-label">Grunnverdi</div><div class="stat-value credits">450</div></div>
+      <div class="stat"><div class="stat-label">Kategori</div><div class="stat-value" style="font-size:0.9rem">Mineral</div></div>
+    </div>
+    <div class="unlock-bar"><span class="unlock-icon">🔓</span> Tilgjengelig fra dag 1</div>
+  </div>
+</div>
+
+<!-- ═══ UVANLIGE ═══ -->
+
+<div class="card" data-rarity="uncommon" data-cat="Krystall">
+  <div class="card-top">
+    <div class="mineral-gem" style="background:#AADDFF22;border:2px solid #AADDFF;">🔹</div>
+    <div class="card-title">
+      <h2>Crystite</h2>
+      <div class="cat-rarity">
+        <span class="badge" style="background:#1a1a2a;color:#888;">🔷 Krystall</span>
+        <span class="badge rarity-badge" data-rarity="uncommon">● UVANLIG</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <p class="desc">Prismatisk formasjon med unike optiske egenskaper. Splitter lys i spektre som ingen annen naturlig substans kan reprodusere. Ettertraktet av optikkindustrien og kunstige intelligenser som bruker lysbaserte prosessorer.</p>
+    <div class="card-stats">
+      <div class="stat"><div class="stat-label">Grunnverdi</div><div class="stat-value credits">600</div></div>
+      <div class="stat"><div class="stat-label">Kategori</div><div class="stat-value" style="font-size:0.9rem">Krystall</div></div>
+    </div>
+    <div class="unlock-bar"><span class="unlock-icon">📅</span> Låses opp dag 3</div>
+  </div>
+</div>
+
+<div class="card" data-rarity="uncommon" data-cat="Krystall">
+  <div class="card-top">
+    <div class="mineral-gem" style="background:#4488FF22;border:2px solid #4488FF;">💠</div>
+    <div class="card-title">
+      <h2>Velorite</h2>
+      <div class="cat-rarity">
+        <span class="badge" style="background:#1a1a2a;color:#888;">🔷 Krystall</span>
+        <span class="badge rarity-badge" data-rarity="uncommon">● UVANLIG</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <p class="desc">Blåglinsende krystall brukt i energiskjold og lysbryting. Det karakteristiske blå skjæret kommer fra kvantemekanisk spredning av fotoner i krystallgitteret. Grunnkomponent i mange typer defensivt skipsustyr.</p>
+    <div class="card-stats">
+      <div class="stat"><div class="stat-label">Grunnverdi</div><div class="stat-value credits">850</div></div>
+      <div class="stat"><div class="stat-label">Kategori</div><div class="stat-value" style="font-size:0.9rem">Krystall</div></div>
+    </div>
+    <div class="unlock-bar"><span class="unlock-icon">📅</span> Låses opp dag 3</div>
+  </div>
+</div>
+
+<div class="card" data-rarity="uncommon" data-cat="Mineral">
+  <div class="card-top">
+    <div class="mineral-gem" style="background:#AAFFFF22;border:2px solid #AAFFFF;">❄️</div>
+    <div class="card-title">
+      <h2>Cryonite</h2>
+      <div class="cat-rarity">
+        <span class="badge" style="background:#1a1a2a;color:#888;">🌡 Mineral</span>
+        <span class="badge rarity-badge" data-rarity="uncommon">● UVANLIG</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <p class="desc">Ekstreme kuldeegenskaper — brukt i kryogenisk lagring. Kan senke temperaturen i nærområdet til nær absolutt nullpunkt uten ekstern energitilførsel. Uunnværlig for long-range romfart der besetningen fryses ned.</p>
+    <div class="card-stats">
+      <div class="stat"><div class="stat-label">Grunnverdi</div><div class="stat-value credits">880</div></div>
+      <div class="stat"><div class="stat-label">Kategori</div><div class="stat-value" style="font-size:0.9rem">Mineral</div></div>
+    </div>
+    <div class="unlock-bar"><span class="unlock-icon">📅</span> Låses opp dag 3</div>
+  </div>
+</div>
+
+<div class="card" data-rarity="uncommon" data-cat="Element">
+  <div class="card-top">
+    <div class="mineral-gem" style="background:#FF664422;border:2px solid #FF6644;">☢️</div>
+    <div class="card-title">
+      <h2>Radiite</h2>
+      <div class="cat-rarity">
+        <span class="badge" style="background:#1a1a2a;color:#888;">⚗ Element</span>
+        <span class="badge rarity-badge" data-rarity="uncommon">● UVANLIG</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <p class="desc">Svakt radioaktivt — gir et mildt rødt skjær i mørket. Hverken farlig nok til å kreve spesialemballasje, ei heller kraftig nok for reaktorbruk. Brukes primært som instrumentlys og i lavenergi-sensorer.</p>
+    <div class="card-stats">
+      <div class="stat"><div class="stat-label">Grunnverdi</div><div class="stat-value credits">760</div></div>
+      <div class="stat"><div class="stat-label">Kategori</div><div class="stat-value" style="font-size:0.9rem">Element</div></div>
+    </div>
+    <div class="unlock-bar"><span class="unlock-icon">📅</span> Låses opp dag 3</div>
+  </div>
+</div>
+
+<div class="card" data-rarity="uncommon" data-cat="Element">
+  <div class="card-top">
+    <div class="mineral-gem" style="background:#FFFF4422;border:2px solid #FFFF44;">⚡</div>
+    <div class="card-title">
+      <h2>Voltite</h2>
+      <div class="cat-rarity">
+        <span class="badge" style="background:#1a1a2a;color:#888;">⚗ Element</span>
+        <span class="badge rarity-badge" data-rarity="uncommon">● UVANLIG</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <p class="desc">Genererer statisk elektrisitet ved kontakt med metall. En liten klump Voltite kan holde en lampe lyskraftig i flere uker. Høyt etterspurt av gruvestasjoner som ønsker å supplere nødstrømsreservene.</p>
+    <div class="card-stats">
+      <div class="stat"><div class="stat-label">Grunnverdi</div><div class="stat-value credits">920</div></div>
+      <div class="stat"><div class="stat-label">Kategori</div><div class="stat-value" style="font-size:0.9rem">Element</div></div>
+    </div>
+    <div class="unlock-bar"><span class="unlock-icon">📅</span> Låses opp dag 3</div>
+  </div>
+</div>
+
+<div class="card" data-rarity="uncommon" data-cat="Krystall">
+  <div class="card-top">
+    <div class="mineral-gem" style="background:#CC88FF22;border:2px solid #CC88FF;">🔮</div>
+    <div class="card-title">
+      <h2>Morganite</h2>
+      <div class="cat-rarity">
+        <span class="badge" style="background:#1a1a2a;color:#888;">🔷 Krystall</span>
+        <span class="badge rarity-badge" data-rarity="uncommon">● UVANLIG</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <p class="desc">Myk lilla krystall — verdifull innen biomedisin. Reagerer merkelig med organisk vev og akselererer celledeling under kontrollerte forhold. En av de mest lovende ingrediensene i neste generasjons regenerativt medisinsk utstyr.</p>
+    <div class="card-stats">
+      <div class="stat"><div class="stat-label">Grunnverdi</div><div class="stat-value credits">540</div></div>
+      <div class="stat"><div class="stat-label">Kategori</div><div class="stat-value" style="font-size:0.9rem">Krystall</div></div>
+    </div>
+    <div class="unlock-bar"><span class="unlock-icon">📅</span> Låses opp dag 3</div>
+  </div>
+</div>
+
+<div class="card" data-rarity="uncommon" data-cat="Element">
+  <div class="card-top">
+    <div class="mineral-gem" style="background:#44FFFF22;border:2px solid #44FFFF;">🌊</div>
+    <div class="card-title">
+      <h2>Ionite</h2>
+      <div class="cat-rarity">
+        <span class="badge" style="background:#1a1a2a;color:#888;">⚗ Element</span>
+        <span class="badge rarity-badge" data-rarity="uncommon">● UVANLIG</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <p class="desc">Ionrikt forbindelsesmateriale brukt i ionmotorer. Avgir en stabil strøm av ioniserte partikler som kan utnyttes direkte til fremdrift. En av grunnpilarene i moderne romskipsteknologi for lang rekkevidde.</p>
+    <div class="card-stats">
+      <div class="stat"><div class="stat-label">Grunnverdi</div><div class="stat-value credits">710</div></div>
+      <div class="stat"><div class="stat-label">Kategori</div><div class="stat-value" style="font-size:0.9rem">Element</div></div>
+    </div>
+    <div class="unlock-bar"><span class="unlock-icon">📅</span> Låses opp dag 3</div>
+  </div>
+</div>
+
+<!-- ═══ SJELDNE ═══ -->
+
+<div class="card" data-rarity="rare" data-cat="Metall">
+  <div class="card-top">
+    <div class="mineral-gem" style="background:#CC883322;border:2px solid #CC8833;">🟤</div>
+    <div class="card-title">
+      <h2>Thoranium</h2>
+      <div class="cat-rarity">
+        <span class="badge" style="background:#1a1a2a;color:#888;">⚙ Metall</span>
+        <span class="badge rarity-badge" data-rarity="rare">● SJELDEN</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <p class="desc">Tungt metallisk malm — nøkkelen for fusjonsreaktorer. Den unike atomstrukturen gjør Thoranium til det eneste kjente materialet som kan inneholde plasma ved fusjonstemperaturer uten å smelte. Ekstremt verdifullt for energisektoren.</p>
+    <div class="card-stats">
+      <div class="stat"><div class="stat-label">Grunnverdi</div><div class="stat-value credits">1 200</div></div>
+      <div class="stat"><div class="stat-label">Kategori</div><div class="stat-value" style="font-size:0.9rem">Metall</div></div>
+    </div>
+    <div class="unlock-bar"><span class="unlock-icon">📅</span> Låses opp dag 7</div>
+  </div>
+</div>
+
+<div class="card" data-rarity="rare" data-cat="Metall">
+  <div class="card-top">
+    <div class="mineral-gem" style="background:#CCCCFF22;border:2px solid #CCCCFF;">🌙</div>
+    <div class="card-title">
+      <h2>Lunarium</h2>
+      <div class="cat-rarity">
+        <span class="badge" style="background:#1a1a2a;color:#888;">⚙ Metall</span>
+        <span class="badge rarity-badge" data-rarity="rare">● SJELDEN</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <p class="desc">Finnes kun på måner — ekstremt formbart ved lav temperatur. I motsetning til andre metaller blir Lunarium mykere jo kaldere det blir, noe som gjør det ideelt for presisjonsstøping i romstasjoners kjølerom.</p>
+    <div class="card-stats">
+      <div class="stat"><div class="stat-label">Grunnverdi</div><div class="stat-value credits">1 500</div></div>
+      <div class="stat"><div class="stat-label">Kategori</div><div class="stat-value" style="font-size:0.9rem">Metall</div></div>
+    </div>
+    <div class="unlock-bar"><span class="unlock-icon">📅</span> Låses opp dag 7</div>
+  </div>
+</div>
+
+<div class="card" data-rarity="rare" data-cat="Element">
+  <div class="card-top">
+    <div class="mineral-gem" style="background:#FF442222;border:2px solid #FF4422;">🔴</div>
+    <div class="card-title">
+      <h2>Novanite</h2>
+      <div class="cat-rarity">
+        <span class="badge" style="background:#1a1a2a;color:#888;">⚗ Element</span>
+        <span class="badge rarity-badge" data-rarity="rare">● SJELDEN</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <p class="desc">Svart reaktivt grunnstoff — ustabilt ved romtemperatur. Frigjør enorme mengder energi under kontrollert dekomponering, noe som gjør det til et attraktivt, om risikabelt, drivstoffalternativ. Krever spesiell håndtering under transport.</p>
+    <div class="card-stats">
+      <div class="stat"><div class="stat-label">Grunnverdi</div><div class="stat-value credits">950</div></div>
+      <div class="stat"><div class="stat-label">Kategori</div><div class="stat-value" style="font-size:0.9rem">Element</div></div>
+    </div>
+    <div class="unlock-bar"><span class="unlock-icon">📅</span> Låses opp dag 7</div>
+  </div>
+</div>
+
+<div class="card" data-rarity="rare" data-cat="Gass">
+  <div class="card-top">
+    <div class="mineral-gem" style="background:#88FFAA22;border:2px solid #88FFAA;">🌿</div>
+    <div class="card-title">
+      <h2>Aethrite</h2>
+      <div class="cat-rarity">
+        <span class="badge" style="background:#1a1a2a;color:#888;">💨 Gass</span>
+        <span class="badge rarity-badge" data-rarity="rare">● SJELDEN</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <p class="desc">Fanger seg i porøse steiner — flyter i lav tyngdekraft. Det eneste gassformige mineralet på listen; Aethrite tetter seg inn i hulrom og danner stabile lommer som kan utvinnes med vakuumpumper. Leviterer synlig i mikrogravitasjon.</p>
+    <div class="card-stats">
+      <div class="stat"><div class="stat-label">Grunnverdi</div><div class="stat-value credits">1 800</div></div>
+      <div class="stat"><div class="stat-label">Kategori</div><div class="stat-value" style="font-size:0.9rem">Gass</div></div>
+    </div>
+    <div class="unlock-bar"><span class="unlock-icon">📅</span> Låses opp dag 7</div>
+  </div>
+</div>
+
+<div class="card" data-rarity="rare" data-cat="Metall">
+  <div class="card-top">
+    <div class="mineral-gem" style="background:#88776622;border:2px solid #887766;">⚫</div>
+    <div class="card-title">
+      <h2>Plutite</h2>
+      <div class="cat-rarity">
+        <span class="badge" style="background:#1a1a2a;color:#888;">⚙ Metall</span>
+        <span class="badge rarity-badge" data-rarity="rare">● SJELDEN</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <p class="desc">Sjeldent tungt grunnstoff brukt i avanserte reaktorer. Har en av de høyeste atommassene av alle naturlig forekommende stoffer i dette solsystemet. Strengt regulert, men prisen reflekterer den enorme etterspørselen.</p>
+    <div class="card-stats">
+      <div class="stat"><div class="stat-label">Grunnverdi</div><div class="stat-value credits">1 650</div></div>
+      <div class="stat"><div class="stat-label">Kategori</div><div class="stat-value" style="font-size:0.9rem">Metall</div></div>
+    </div>
+    <div class="unlock-bar"><span class="unlock-icon">📅</span> Låses opp dag 7</div>
+  </div>
+</div>
+
+<!-- ═══ SVÆRT SJELDNE ═══ -->
+
+<div class="card" data-rarity="very_rare" data-cat="Krystall">
+  <div class="card-top">
+    <div class="mineral-gem" style="background:#FF88FF22;border:2px solid #FF88FF;">🔮</div>
+    <div class="card-title">
+      <h2>Quantite</h2>
+      <div class="cat-rarity">
+        <span class="badge" style="background:#1a1a2a;color:#888;">🔷 Krystall</span>
+        <span class="badge rarity-badge" data-rarity="very_rare">● SVÆRT SJELDEN</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <p class="desc">Mineralet eksisterer tilsynelatende to steder samtidig. Kvantemekanisk superposisjon på makroskopisk nivå — noe vitenskapen ennå ikke fullt ut forstår. Forskningsinstitutter betaler astronomiske summer for selv små prøver.</p>
+    <div class="card-stats">
+      <div class="stat"><div class="stat-label">Grunnverdi</div><div class="stat-value credits">2 200</div></div>
+      <div class="stat"><div class="stat-label">Kategori</div><div class="stat-value" style="font-size:0.9rem">Krystall</div></div>
+    </div>
+    <div class="unlock-bar"><span class="unlock-icon">📅</span> Låses opp dag 14</div>
+  </div>
+</div>
+
+<div class="card" data-rarity="very_rare" data-cat="Krystall">
+  <div class="card-top">
+    <div class="mineral-gem" style="background:#FFFFAA22;border:2px solid #FFFFAA;">⏱</div>
+    <div class="card-title">
+      <h2>Chronite</h2>
+      <div class="cat-rarity">
+        <span class="badge" style="background:#1a1a2a;color:#888;">🔷 Krystall</span>
+        <span class="badge rarity-badge" data-rarity="very_rare">● SVÆRT SJELDEN</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <p class="desc">Hemmer atomhenfall i nærliggende materialer. En klump Chronite ved siden av organisk vev kan forlenge holdbarhetstiden med faktorer som grenser til det utrolige. Medisinsk og militær interesse er enorm — og rivaliserende.</p>
+    <div class="card-stats">
+      <div class="stat"><div class="stat-label">Grunnverdi</div><div class="stat-value credits">2 400</div></div>
+      <div class="stat"><div class="stat-label">Kategori</div><div class="stat-value" style="font-size:0.9rem">Krystall</div></div>
+    </div>
+    <div class="unlock-bar"><span class="unlock-icon">📅</span> Låses opp dag 14</div>
+  </div>
+</div>
+
+<div class="card" data-rarity="very_rare" data-cat="Ukjent">
+  <div class="card-top">
+    <div class="mineral-gem" style="background:#ffffff15;border:2px solid #FFFFFF;">❓</div>
+    <div class="card-title">
+      <h2>Xenovite</h2>
+      <div class="cat-rarity">
+        <span class="badge" style="background:#1a1a2a;color:#888;">❔ Ukjent</span>
+        <span class="badge rarity-badge" data-rarity="very_rare">● SVÆRT SJELDEN</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <p class="desc">Ukjent opprinnelse — alle analyser gir motstridende resultater. Hvitt og nesten gjennomsiktig. Ingen vet hva det er laget av, hva det brukes til, eller hvor det stammer fra. Kjøpere betaler nesten hva som helst for et funn.</p>
+    <div class="card-stats">
+      <div class="stat"><div class="stat-label">Grunnverdi</div><div class="stat-value credits">3 100</div></div>
+      <div class="stat"><div class="stat-label">Kategori</div><div class="stat-value" style="font-size:0.9rem">Ukjent</div></div>
+    </div>
+    <div class="unlock-bar"><span class="unlock-icon">📅</span> Låses opp dag 14</div>
+  </div>
+</div>
+
+<!-- ═══ LEGENDARISK ═══ -->
+
+<div class="card" data-rarity="legendary" data-cat="Metall">
+  <div class="card-top">
+    <div class="mineral-gem" style="background:#FFD70033;border:2px solid #FFD700;">👑</div>
+    <div class="card-title">
+      <h2>Novium</h2>
+      <div class="cat-rarity">
+        <span class="badge" style="background:#1a1a2a;color:#888;">⚙ Metall</span>
+        <span class="badge rarity-badge" data-rarity="legendary">★ LEGENDARISK</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <p class="desc">Det sjeldneste av alt — gullskimrende og nesten uknuselig. Novium har aldri blitt syntetisert i laboratorium, og kun et titalls gram er noensinne bekreftet funnet. En enkelt enhet fra din drill er nok til å sikre fremtiden for hele Luna-7-stasjonen.</p>
+    <div class="card-stats">
+      <div class="stat"><div class="stat-label">Grunnverdi</div><div class="stat-value credits">4 500</div></div>
+      <div class="stat"><div class="stat-label">Kategori</div><div class="stat-value" style="font-size:0.9rem">Metall</div></div>
+    </div>
+    <div class="unlock-bar"><span class="unlock-icon">⭐</span> Låses opp dag 25 — ekstremt sjeldent funn</div>
+  </div>
+</div>
+
+</div><!-- /grid -->
+
+<footer>
+  VOID MINER  ·  LUNA-7 MINING STATION  ·  INTERN HÅNDBOKUTGAVE<br>
+  Priser er baseverdi og kan variere med opp til ±30 % avhengig av handelspartner.
+</footer>
+
+<script>
+function filter(rarity, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.card').forEach(card => {
+    if (rarity === 'all' || card.dataset.rarity === rarity) {
+      card.style.display = '';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+</script>
+</body>
+</html>

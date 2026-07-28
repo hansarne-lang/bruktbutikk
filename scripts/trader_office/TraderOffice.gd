@@ -174,11 +174,11 @@ func _sell_all() -> void:
 		return
 	SaveManager.game_data["credits"]     = SaveManager.game_data.get("credits", 0) + earned
 	SaveManager.game_data["trades_done"] = SaveManager.game_data.get("trades_done", 0) + 1
-	SaveManager.game_data["day"]         = SaveManager.game_data.get("day", 1) + 1
-	SaveManager.game_data["time_of_day"] = 0.0
 	SaveManager.game_data["last_earned"] = earned
 	SaveManager.game_data["last_trader"] = _td["name"]
-	SaveManager.add_trade_log(earned, _td["name"])
+	SaveManager.add_trade_log(earned, _td["name"])   # logg FØR dag-økning
+	SaveManager.game_data["day"]         = SaveManager.game_data.get("day", 1) + 1
+	SaveManager.game_data["time_of_day"] = 0.0
 	SaveManager.empty_ship_cargo()
 	SaveManager.save_game()
 	SoundManager.play("kaching")

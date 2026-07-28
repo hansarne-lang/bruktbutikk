@@ -105,7 +105,9 @@ func _ready() -> void:
 	# Sjekk om bestilte varer er ankommet
 	var delivered : Array = SaveManager.check_and_deliver_orders()
 	if not delivered.is_empty():
-		var names : Array = delivered.map(func(o) -> String: return o.get("item_name", "?"))
+		var names : PackedStringArray = []
+		for o in delivered:
+			names.append(o.get("item_name", "?"))
 		_set_status("Levering ankommet: %s" % ", ".join(names))
 
 	# Kart: åpnes via Start mining (se _on_mine_toggled)
@@ -658,7 +660,9 @@ func _refresh_engine_room() -> void:
 	var spd   : float = SaveManager.get_repair_speed()
 	(engine_room_panel.get_node("VBox/SkillLabel") as Label).text = \
 		"Reparasjonsferdighet: %.1f  |  Fart: %.0f kond/tikk" % [skill, spd]
-	var tool_names : Array = tools.map(func(t) -> String: return _tool_label(t))
+	var tool_names : PackedStringArray = []
+	for t in tools:
+		tool_names.append(_tool_label(t))
 	(engine_room_panel.get_node("VBox/ToolLabel") as Label).text = \
 		"Verktøy: %s" % (", ".join(tool_names) if not tool_names.is_empty() else "ingen")
 
@@ -716,7 +720,7 @@ func _refresh_engine_room() -> void:
 	var orders : Array = SaveManager.game_data.get("pending_orders", [])
 	var rep_status := engine_room_panel.get_node("VBox/RepairStatus") as Label
 	if not orders.is_empty():
-		var lines : Array = []
+		var lines : PackedStringArray = []
 		for o in orders:
 			lines.append("%s → leveres dag %d" % [o.get("item_name", "?"), o.get("deliver_day", 0)])
 		rep_status.text    = "Ventende bestillinger:\n" + "\n".join(lines)

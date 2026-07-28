@@ -33,6 +33,8 @@ func new_game() -> void:
 		"last_trader":     "",
 		"chosen_trader":   1,
 		"trade_log":       [],
+		# Stasjonsnavn
+		"moon_name":       "Luna-7 Mining Station",
 	}
 
 func save_game() -> void:
@@ -74,6 +76,7 @@ func load_game() -> bool:
 	if not game_data.has("last_trader"):    game_data["last_trader"]    = ""
 	if not game_data.has("chosen_trader"):  game_data["chosen_trader"]  = 1
 	if not game_data.has("trade_log"):      game_data["trade_log"]      = []
+	if not game_data.has("moon_name"):      game_data["moon_name"]      = "Luna-7 Mining Station"
 	return true
 
 ## Beregn totalt antall enheter i alle tanker

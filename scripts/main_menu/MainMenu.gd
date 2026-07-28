@@ -1,16 +1,29 @@
 extends Control
 
-@onready var new_game_button : Button = $VBoxContainer/NewGameButton
-@onready var load_button     : Button = $VBoxContainer/LoadButton
-@onready var save_button     : Button = $VBoxContainer/SaveButton
-@onready var quit_button     : Button = $VBoxContainer/QuitButton
-@onready var stars_node              = $Stars
+const MOON_NAMES := [
+	"Luna-7 Mining Station", "Kepler Station", "Nyx-3 Outpost",
+	"Astraea Base", "Helios Station", "Erebus Mining Camp",
+	"Callisto-2 Hub", "Phaedra-9 Station", "Io Outpost", "Vega Base",
+	"Selene Station", "Artemis Base", "Hyperion Camp", "Tethys-4",
+]
+
+@onready var new_game_button : Button   = $VBoxContainer/NewGameButton
+@onready var load_button     : Button   = $VBoxContainer/LoadButton
+@onready var save_button     : Button   = $VBoxContainer/SaveButton
+@onready var quit_button     : Button   = $VBoxContainer/QuitButton
+@onready var stars_node                 = $Stars
+@onready var name_dialog                = $NameDialog
+@onready var name_edit       : LineEdit = $NameDialog/VBox/NameEdit
+@onready var confirm_btn     : Button   = $NameDialog/VBox/HBox/ConfirmButton
+@onready var cancel_btn      : Button   = $NameDialog/VBox/HBox/CancelButton
 
 func _ready() -> void:
 	new_game_button.pressed.connect(_on_new_game_pressed)
 	load_button.pressed.connect(_on_load_pressed)
 	save_button.pressed.connect(_on_save_pressed)
 	quit_button.pressed.connect(_on_quit_pressed)
+	confirm_btn.pressed.connect(_on_confirm_name)
+	cancel_btn.pressed.connect(func(): name_dialog.visible = false)
 	save_button.disabled = not SaveManager.has_active_game()
 	_draw_stars()
 
@@ -25,7 +38,19 @@ func _draw_stars() -> void:
 		stars_node.add_child(rect)
 
 func _on_new_game_pressed() -> void:
+	# Vis navne-dialog med tilfeldig forslag
+	name_edit.text = MOON_NAMES[randi() % MOON_NAMES.size()]
+	name_dialog.visible = true
+	name_edit.grab_focus()
+	name_edit.select_all()
+
+func _on_confirm_name() -> void:
+	var moon_name : String = name_edit.text.strip_edges()
+	if moon_name == "":
+		moon_name = "Luna-7 Mining Station"
+	name_dialog.visible = false
 	SaveManager.new_game()
+	SaveManager.game_data["moon_name"] = moon_name
 	SaveManager.save_game()
 	get_tree().change_scene_to_file("res://scenes/base/Base.tscn")
 

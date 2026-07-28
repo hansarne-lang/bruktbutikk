@@ -58,6 +58,8 @@ func _ready() -> void:
 	$UI/ActionBar/MainMenuButton.pressed.connect(func() -> void:
 		SaveManager.save_game()
 		get_tree().change_scene_to_file("res://scenes/main_menu/MainMenu.tscn"))
+	$UI/UpgradePanel/VBox/TitleRow/CloseBtn.pressed.connect(func(): upgrade_panel.visible = false)
+	$UI/LogPanel/VBox/TitleRow/CloseBtn.pressed.connect(func(): log_panel.visible = false)
 
 	_current_mineral = DataLoader.random_mineral()
 
@@ -116,6 +118,10 @@ func _on_mine_toggled() -> void:
 func _on_mine_tick() -> void:
 	SoundManager.play("drill_tick", -4.0)
 	var ok := SaveManager.add_mineral(_current_mineral, MINE_AMT)
+	if not ok:
+		# Prøv å bytte til et mineral som passer i en eksisterende tank
+		if _switch_to_available_mineral():
+			ok = SaveManager.add_mineral(_current_mineral, MINE_AMT)
 	if ok:
 		_spawn_particles(980.0, 392.0)
 		if randf() < 0.25:
@@ -126,6 +132,19 @@ func _on_mine_tick() -> void:
 		_mining_active = false
 		$UI/ActionBar/MineButton.text = "Start mining"
 		_set_status("Alle tanker er fulle! Gå om bord og reis til en trader for å selge.")
+
+## Bytter _current_mineral til et som passer i en eksisterende tank.
+## Returnerer true hvis det fantes plass et sted.
+func _switch_to_available_mineral() -> bool:
+	var tanks : Array = SaveManager.game_data.get("tanks", [])
+	for tank in tanks:
+		var mid : String = tank.get("mineral_id", "")
+		var amt : int    = tank.get("amount",     0)
+		var cap : int    = tank.get("capacity",   50)
+		if mid != "" and amt < cap:
+			_current_mineral = mid
+			return true
+	return false
 
 func _spawn_particles(x: float, y: float) -> void:
 	var colors := ["CC8833", "FFDD44", "AADDFF", "88CCFF", "4488FF", "AAFFAA"]
@@ -177,7 +196,7 @@ func _toggle_upgrade_panel() -> void:
 func _refresh_upgrade_panel() -> void:
 	var vbox := upgrade_panel.get_node("VBox")
 	for child in vbox.get_children():
-		if child.name != "Title":
+		if child.name != "TitleRow":
 			child.queue_free()
 
 	var d  := SaveManager.game_data
@@ -261,6 +280,7 @@ func _refresh_ui() -> void:
 	var d := SaveManager.game_data
 	hud_day_lbl.text  = "Dag  %d" % d.get("day", 1)
 	hud_cred_lbl.text = "%d  kreditter" % d.get("credits", 0)
+	$UI/HUD/LocationLabel.text = d.get("moon_name", "Luna-7 Mining Station")
 
 	var mn    := _mineral_name(_current_mineral)
 	var day   : int = d.get("day", 1)

@@ -98,10 +98,20 @@ visible = false
 [node name="VBox" type="VBoxContainer" parent="UI/UpgradePanel"]
 theme_override_constants/separation = 8
 
-[node name="Title" type="Label" parent="UI/UpgradePanel/VBox"]
+[node name="TitleRow" type="HBoxContainer" parent="UI/UpgradePanel/VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="UI/UpgradePanel/VBox/TitleRow"]
+layout_mode = 2
+size_flags_horizontal = 3
 text = "Oppgraderinger"
 theme_override_font_sizes/font_size = 13
 theme_override_colors/font_color = Color(0.6, 0.8, 1.0, 1)
+
+[node name="CloseBtn" type="Button" parent="UI/UpgradePanel/VBox/TitleRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(28, 28)
+text = "✕"
 
 [node name="LogPanel" type="PanelContainer" parent="UI"]
 position = Vector2(340, 44)
@@ -111,10 +121,20 @@ visible = false
 [node name="VBox" type="VBoxContainer" parent="UI/LogPanel"]
 theme_override_constants/separation = 6
 
-[node name="Title" type="Label" parent="UI/LogPanel/VBox"]
+[node name="TitleRow" type="HBoxContainer" parent="UI/LogPanel/VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="UI/LogPanel/VBox/TitleRow"]
+layout_mode = 2
+size_flags_horizontal = 3
 text = "Handelslogg"
 theme_override_font_sizes/font_size = 13
 theme_override_colors/font_color = Color(0.6, 0.8, 1.0, 1)
+
+[node name="CloseBtn" type="Button" parent="UI/LogPanel/VBox/TitleRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(28, 28)
+text = "✕"
 
 [node name="Scroll" type="ScrollContainer" parent="UI/LogPanel/VBox"]
 custom_minimum_size = Vector2(420, 130)

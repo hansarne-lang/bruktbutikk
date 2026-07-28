@@ -10,6 +10,7 @@ const TRADERS := {
 		"head_col":   Color(0.35, 0.48, 0.65),
 		"accent":     Color(0.5,  0.7,  1.0),
 		"greeting":   "Hei, hei! La meg se kva du har med deg...",
+		"farewell":   "Bra gjort! Kom tilbake når tankene er fulle igjen.",
 	},
 	2: {
 		"name":       "Zyla",
@@ -18,6 +19,7 @@ const TRADERS := {
 		"head_col":   Color(0.62, 0.50, 0.22),
 		"accent":     Color(1.0,  0.85, 0.3),
 		"greeting":   "Velkommen til Zyla Station. Vi betaler godt.",
+		"farewell":   "En fornøyelse. Fly trygt.",
 	},
 }
 
@@ -31,6 +33,7 @@ var _td      : Dictionary = {}
 @onready var cargo_lbl   : Label  = $UI/CargoLabel
 @onready var sell_btn    : Button = $UI/ButtonPanel/SellButton
 @onready var home_btn    : Button = $UI/ButtonPanel/HomeButton
+@onready var travel_btn  : Button = $UI/ButtonPanel/TravelButton
 
 func _ready() -> void:
 	_chosen = SaveManager.game_data.get("chosen_trader", 1)
@@ -49,6 +52,7 @@ func _ready() -> void:
 
 	sell_btn.pressed.connect(_sell)
 	home_btn.pressed.connect(_go_home)
+	travel_btn.pressed.connect(_go_map)
 
 func _process(delta: float) -> void:
 	_time += delta
@@ -95,11 +99,21 @@ func _sell() -> void:
 	SaveManager.empty_tanks()
 	SaveManager.save_game()
 	SoundManager.play("kaching")
-	get_tree().change_scene_to_file("res://scenes/base/Base.tscn")
+	# Vis valg istedenfor å navigere bort med en gang
+	sell_btn.disabled = true
+	sell_btn.text     = "✓ Solgt!"
+	offer_lbl.text    = "Salg fullført!  +%d kreditter" % earned
+	greeting_lbl.text = "\"%s\"" % _td.get("farewell", "Takk for handelen – kom gjerne igjen!")
+	home_btn.text     = "🏠 Reis hjem"
+	travel_btn.visible = true
 
 func _go_home() -> void:
 	SaveManager.save_game()
 	get_tree().change_scene_to_file("res://scenes/base/Base.tscn")
+
+func _go_map() -> void:
+	SaveManager.save_game()
+	get_tree().change_scene_to_file("res://scenes/map/Map.tscn")
 
 # ── Tegning ──────────────────────────────────────────────────
 func _draw() -> void:

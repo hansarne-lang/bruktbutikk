@@ -1,10 +1,11 @@
 extends Node2D
 ## Skipets maskinrom – proseduralt tegnet sci-fi interiør
 
-const SPEED         := 225.0
-const PC_X          := 900.0
-const ENGINE_DOOR_X := 120.0   # Luke til motorrommet (venstre side)
-const INTERACT_DIST := 130.0
+const SPEED           := 225.0
+const PC_X            := 900.0
+const ENGINE_DOOR_X   := 120.0    # Luke til motorrommet (venstre side)
+const TORPEDO_DOOR_X  := 1155.0   # Luke til torpedorommet (høyre side)
+const INTERACT_DIST   := 130.0
 
 # ── Romtegning ────────────────────────────────────────────────
 var _porthole_stars : Array = []
@@ -13,6 +14,7 @@ var _time           : float = 0.0
 @onready var player               : Sprite2D = $Player
 @onready var interact_prompt               = $UI/InteractPrompt
 @onready var engine_room_prompt            = $UI/EngineRoomPrompt
+@onready var torpedo_room_prompt           = $UI/TorpedoRoomPrompt
 @onready var terminal                      = $UI/Terminal
 @onready var output_label    : Label       = $UI/Terminal/TerminalVBox/ScreenBg/OutputScroll/OutputLabel
 @onready var input_field     : LineEdit    = $UI/Terminal/TerminalVBox/ScreenBg/InputRow/InputField
@@ -98,6 +100,10 @@ func _process(delta: float) -> void:
 	var er_dist : float = abs(player.position.x - ENGINE_DOOR_X)
 	engine_room_prompt.visible = er_dist < INTERACT_DIST and not terminal_open
 
+	# Nærhet til torpedorom-luke
+	var tr_dist : float = abs(player.position.x - TORPEDO_DOOR_X)
+	torpedo_room_prompt.visible = tr_dist < INTERACT_DIST and not terminal_open
+
 # ── Tastaturhendelser ────────────────────────────────────────
 func _input(event: InputEvent) -> void:
 	if not event is InputEventKey: return
@@ -114,6 +120,11 @@ func _input(event: InputEvent) -> void:
 			if er_dist < INTERACT_DIST:
 				SaveManager.save_game()
 				get_tree().change_scene_to_file("res://scenes/engine_room/EngineRoom.tscn")
+				return
+			var tr_dist : float = abs(player.position.x - TORPEDO_DOOR_X)
+			if tr_dist < INTERACT_DIST:
+				SaveManager.save_game()
+				get_tree().change_scene_to_file("res://scenes/torpedo_room/TorpedoRoom.tscn")
 				return
 			var dist: float = abs(player.position.x - PC_X)
 			if dist < INTERACT_DIST:
@@ -401,6 +412,25 @@ func _draw() -> void:
 	var er_dist : float = abs(player.position.x - ENGINE_DOOR_X)
 	if er_dist < INTERACT_DIST:
 		draw_rect(Rect2(66, 338, 104, 156), Color(C_ACCENT.r, C_ACCENT.g, C_ACCENT.b, 0.15))
+
+	# ── Torpedorom-luke (høyre vegg) ────────────────────────
+	draw_rect(Rect2(1108, 340, 100, 152), Color(0.05, 0.07, 0.10))
+	draw_rect(Rect2(1111, 343,  94, 146), Color(0.04, 0.06, 0.09))
+	draw_rect(Rect2(1156, 343, 4, 146), Color(0.14, 0.18, 0.24))   # midtbjelke
+	draw_rect(Rect2(1106, 338, 104, 156), Color(0.8, 0.3, 0.1), false, 3.0)   # oransje ramme
+	draw_circle(Vector2(1118, 352), 6, Color(0.95, 0.55, 0.15))     # oransje lampe
+	# Torpedosymbol på døren
+	var tdx : float = 1120.0
+	var tdy : float = 390.0
+	for j : int in 3:
+		var ey : float = tdy + j * 26.0
+		draw_rect(Rect2(tdx, ey, 58, 10), Color(0.25, 0.18, 0.14))
+		draw_colored_polygon(PackedVector2Array([
+			Vector2(tdx + 58, ey + 1), Vector2(tdx + 58, ey + 9), Vector2(tdx + 70, ey + 5),
+		]), Color(0.7, 0.35, 0.12))
+	var tr_dist : float = abs(player.position.x - TORPEDO_DOOR_X)
+	if tr_dist < INTERACT_DIST:
+		draw_rect(Rect2(1106, 338, 104, 156), Color(0.8, 0.4, 0.1, 0.15))
 
 	# ── Veggpaneler ──────────────────────────────────────────
 	draw_rect(Rect2(0, 60, 1280, 440), C_WALL)

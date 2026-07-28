@@ -64,6 +64,30 @@ text = "🧪 Kjør regresjonstester"
 theme_override_font_sizes/font_size = 12
 theme_override_colors/font_color = Color(0.5, 0.7, 0.5, 1)
 
+[node name="MeteorstormTestBtn" type="Button" parent="VBoxContainer"]
+custom_minimum_size = Vector2(280, 32)
+text = "⛈ Test: Meteorstorm"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.5, 0.65, 0.8, 1)
+
+[node name="PirateTestBtn" type="Button" parent="VBoxContainer"]
+custom_minimum_size = Vector2(280, 32)
+text = "☠ Test: Piratkamp"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.8, 0.45, 0.35, 1)
+
+[node name="EndGameBtn" type="Button" parent="VBoxContainer"]
+custom_minimum_size = Vector2(280, 32)
+text = "🌌 Endgame (TBD)"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.6, 0.35, 0.9, 1)
+
+[node name="FuturePlansBtn" type="Button" parent="VBoxContainer"]
+custom_minimum_size = Vector2(280, 32)
+text = "📋 Fremtidsplaner"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.4, 0.65, 0.8, 1)
+
 [node name="VersionLabel" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = 4
@@ -78,6 +102,21 @@ offset_bottom = -4.0
 text = "v0.1  –  Void Miner"
 theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0.3, 0.4, 0.5, 1)
+
+[node name="HiscoreLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_left = -320.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = 160.0
+text = "Hiscore: laster..."
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.5, 0.7, 0.9, 0.85)
 
 [node name="NameDialog" type="PanelContainer" parent="."]
 layout_mode = 1

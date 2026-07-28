@@ -16,6 +16,10 @@ const TRADERS := {
 		"name":       "Zyla",
 		"multiplier": 0.90,
 	},
+	3: {
+		"name":       "Dypromstasjon",
+		"multiplier": 1.00,
+	},
 }
 
 # Tilfeldige hendelser (#2)
@@ -50,7 +54,31 @@ const EVENTS := [
 		"effect": "meteor_storm",
 		"amount": 0,
 	},
+	{
+		"title":  "Piratangrep!",
+		"text":   "En ukjent fartøy trer frem fra mørket – og åpner ild!",
+		"effect": "pirate_attack",
+		"amount": 0,
+	},
+	{
+		"title":  "🏴  Svart marked!",
+		"text":   "Et mystisk fartøy blinker med stjernesignaler – svart markedsvarer til nedsatte priser. Risikabelt, men fristende.",
+		"effect": "black_market",
+		"amount": 0,
+	},
 ]
+
+# Svart marked-tilbud (fast liste, kjøpes direkte for kreditter)
+const BLACK_MARKET_ITEMS : Array = [
+	{"name": "Nano-reparasjonssett (−35%)", "cost": 7800,  "type": "tool",    "id": "nano_repair_kit"},
+	{"name": "Nuke-torpedoer ×3 (−25%)",   "cost": 1125,  "type": "torpedo", "id": "torp_nuke",  "qty": 3},
+	{"name": "Reaktor Nivå 2 (−30%)",       "cost": 4900,  "type": "comp_upg","id": "reactor_upg2",
+	 "comp_id": "reactor", "new_level": 2},
+	{"name": "Skjold Nivå 2 (−30%)",        "cost": 2450,  "type": "upg",     "id": "shield_lvl2"},
+	{"name": "2. laserkanon (−20%)",         "cost": 4000,  "type": "upg",     "id": "cannon_2"},
+]
+
+var _bm_btn      : Button = null   # svart marked-kjøp-knapp (dynamisk)
 
 var _stars         : Array = []
 var _ship_x        : float = -120.0
@@ -90,6 +118,14 @@ func _ready() -> void:
 
 	_refresh_cargo()
 
+	# Forbruk drivstoff ved avreise
+	SaveManager.consume_travel_fuel(3)
+	var fuel_left : int = SaveManager.game_data.get("fuel", 0)
+	if fuel_left <= 0:
+		cargo_lbl.text += "\n\n⚠  Tom for drivstoff! Kjøp mer hos neste trader."
+	elif fuel_left <= 5:
+		cargo_lbl.text += "\n\n⚠  Lavt drivstoff: %d enheter igjen." % fuel_left
+
 	# Tilfeldig hendelse 40% sjanse, etter 2 sek (#2)
 	if randf() < 0.40:
 		await get_tree().create_timer(2.0).timeout
@@ -126,6 +162,31 @@ func _trigger_event() -> void:
 		get_tree().change_scene_to_file("res://scenes/meteor_storm/MeteorStorm.tscn")
 		return
 
+	# Piratangrep → turbasert kamp
+	if ev["effect"] == "pirate_attack":
+		SaveManager.save_game()
+		get_tree().change_scene_to_file("res://scenes/pirate_combat/PirateCombat.tscn")
+		return
+
+	# Svart marked → vis tilbud i event-panelet med ekstra kjøp-knapp
+	if ev["effect"] == "black_market":
+		# Velg et tilfeldig BM-tilbud
+		var bm_item : Dictionary = BLACK_MARKET_ITEMS[randi() % BLACK_MARKET_ITEMS.size()]
+		event_title.text = ev["title"]
+		event_text.text  = ev["text"] + "\n\nTilbud: %s  –  %d kr" % [bm_item["name"], bm_item["cost"]]
+		event_btn.text   = "Ignorer – reis forbi"
+		# Dynamisk kjøp-knapp
+		if _bm_btn:
+			_bm_btn.queue_free()
+		_bm_btn = Button.new()
+		_bm_btn.text = "Kjøp  (%d kr)" % bm_item["cost"]
+		_bm_btn.disabled = SaveManager.game_data.get("credits", 0) < bm_item["cost"]
+		var captured_item : Dictionary = bm_item.duplicate()
+		_bm_btn.pressed.connect(func() -> void: _do_black_market(captured_item))
+		$UI/EventPanel/EventVBox.add_child(_bm_btn)
+		event_panel.visible = true
+		return
+
 	event_title.text = "⚠  " + ev["title"]
 	event_text.text  = ev["text"]
 
@@ -141,11 +202,57 @@ func _trigger_event() -> void:
 			var bonus : int = int(ev["amount"])
 			SaveManager.game_data["credits"] = SaveManager.game_data.get("credits", 0) + bonus
 			event_text.text += "\n\n(+%d kr lagt til.) " % bonus
+		"none":
+			# Toll: straff hvis svart marked-varer om bord
+			if SaveManager.game_data.get("black_market_heat", false):
+				var toll : int = 400
+				SaveManager.game_data["credits"] = max(0, SaveManager.game_data.get("credits", 0) - toll)
+				SaveManager.game_data["black_market_heat"] = false
+				event_title.text = "🚨  Toll-kontroll – ulovlige varer oppdaget!"
+				event_text.text  = "Patruljeskipet fant smuglervarer om bord. Bot: −%d kr. Varene konfiskert." % toll
 
 	event_panel.visible = true
 
 func _dismiss_event() -> void:
 	event_panel.visible = false
+	if _bm_btn:
+		_bm_btn.queue_free()
+		_bm_btn = null
+	event_btn.text = "OK – fortsett"
+
+func _do_black_market(bm_item: Dictionary) -> void:
+	var cost : int = bm_item.get("cost", 0)
+	if SaveManager.game_data.get("credits", 0) < cost:
+		return
+	SaveManager.game_data["credits"] = SaveManager.game_data.get("credits", 0) - cost
+	SaveManager.game_data["black_market_heat"] = true
+	# Lever varen
+	match bm_item.get("type", ""):
+		"tool":
+			var tools : Array = SaveManager.game_data.get("repair_tools", [])
+			if bm_item["id"] not in tools:
+				tools.append(bm_item["id"])
+			SaveManager.game_data["repair_tools"] = tools
+		"torpedo":
+			var td  : Dictionary = SaveManager.game_data.get("torpedoes", {})
+			var tid : String     = bm_item["id"].substr(5)   # "torp_nuke" → "nuke"
+			td[tid] = td.get(tid, 0) + bm_item.get("qty", 1)
+			SaveManager.game_data["torpedoes"] = td
+		"comp_upg":
+			for comp in SaveManager.game_data.get("ship_components", []):
+				if comp.get("id", "") == bm_item.get("comp_id", ""):
+					comp["level"] = max(comp.get("level", 1), bm_item.get("new_level", 2))
+					break
+		"upg":
+			match bm_item["id"]:
+				"shield_lvl2":
+					SaveManager.game_data["shield_level"] = max(SaveManager.game_data.get("shield_level", 1), 2)
+				"cannon_2":
+					SaveManager.game_data["laser_cannons"] = max(SaveManager.game_data.get("laser_cannons", 1), 2)
+	SaveManager.save_game()
+	event_text.text = "Kjøp fullfort: %s\n\n(Advarsel: varene er ulovlige – forvent toll-kontroller!)" % bm_item["name"]
+	if _bm_btn:
+		_bm_btn.disabled = true
 
 # ── Ankommer trader – gå til kontoret for forhandling ────────
 func _go_trader() -> void:

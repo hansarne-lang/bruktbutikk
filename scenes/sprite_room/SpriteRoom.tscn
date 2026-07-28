@@ -69,7 +69,7 @@ text = "🚀 Kart / Reis"
 
 [node name="HintLabel" type="Label" parent="UI"]
 position = Vector2(10, 555)
-text = "A/D: gå   •   E: interager   •   Motorrom-luke: venstre side"
+text = "A/D: gå   •   E: interager   •   Motorrom: venstre   •   Torpedorom: høyre"
 theme_override_font_sizes/font_size = 13
 
 [node name="EngineRoomPrompt" type="PanelContainer" parent="UI"]
@@ -78,6 +78,14 @@ visible = false
 
 [node name="EngineRoomLabel" type="Label" parent="UI/EngineRoomPrompt"]
 text = "  [E]  Gå inn i Motorrom"
+theme_override_font_sizes/font_size = 13
+
+[node name="TorpedoRoomPrompt" type="PanelContainer" parent="UI"]
+position = Vector2(1038, 330)
+visible = false
+
+[node name="TorpedoRoomLabel" type="Label" parent="UI/TorpedoRoomPrompt"]
+text = "  [E]  Torpedorom  ⚡"
 theme_override_font_sizes/font_size = 13
 
 [node name="InteractPrompt" type="PanelContainer" parent="UI"]

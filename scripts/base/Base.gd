@@ -732,6 +732,16 @@ func _refresh_ui() -> void:
 	hud_cred_lbl.text = "%d  kreditter" % d.get("credits", 0)
 	$UI/HUD/LocationLabel.text = d.get("moon_name", "Luna-7 Mining Station")
 
+	# Forbruksvarer-advarsler
+	var fuel     : int = d.get("fuel",     20)
+	var supplies : int = d.get("supplies", 20)
+	if fuel <= 3:
+		_set_status("⛽  Kritisk lavt drivstoff! (%d enheter igjen) – kjøp mer hos trader." % fuel)
+	elif fuel <= 6:
+		_set_status("⛽  Lavt drivstoff: %d enheter igjen." % fuel)
+	elif supplies <= 2:
+		_set_status("🥫  Nesten tom for proviant! (%d enheter igjen) – kjøp mer hos trader." % supplies)
+
 	var mn    := _mineral_name(_current_mineral)
 	var day   : int = d.get("day", 1)
 	var hint  := ""

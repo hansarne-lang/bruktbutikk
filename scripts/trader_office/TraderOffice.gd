@@ -71,16 +71,27 @@ const ORDER_CATALOG := [
 	 "desc": "90 % nøyaktighet på gruvekart","cost": 8000, "days": 3, "type": "upgrade"},
 	{"id": "extra_tank_order","name": "Ekstra mineraltank",
 	 "desc": "3. tank, 50 kap",            "cost": 2000,  "days": 3, "type": "upgrade"},
-	# ── Våpen og energi ────────────────────────────────────────
-	{"id": "torpedoes_5",     "name": "Torpedoer ×5",
-	 "desc": "5 torpedoer til torpedorøret (øyeblikkelig)",
-	 "cost": 500,  "days": 0, "type": "ammo"},
-	{"id": "torpedoes_10",    "name": "Torpedoer ×10",
-	 "desc": "10 torpedoer til torpedorøret (øyeblikkelig)",
-	 "cost": 900,  "days": 0, "type": "ammo"},
+	# ── Laser og skjold ────────────────────────────────────────
 	{"id": "battery_upgrade", "name": "Laser-batteri v2",
-	 "desc": "Dobler laserkapasiteten (100 → 200)",
+	 "desc": "Øker laserskade per kanon (1 → 2 per salve)",
 	 "cost": 2500, "days": 1, "type": "upgrade"},
+	{"id": "cannon_2",        "name": "2. laserkanon",
+	 "desc": "Dobler laser-salver per kamptrinn",
+	 "cost": 5000, "days": 3, "type": "upgrade"},
+	{"id": "cannon_3",        "name": "3. laserkanon",
+	 "desc": "Tredobler laser-salver per kamptrinn",
+	 "cost": 12000,"days": 4, "type": "upgrade"},
+	{"id": "shield_lvl2",     "name": "Skjold Nivå 2",
+	 "desc": "Blokkerer 2 skade per piratangrep",
+	 "cost": 3500, "days": 2, "type": "upgrade"},
+	{"id": "shield_lvl3",     "name": "Skjold Nivå 3",
+	 "desc": "Blokkerer 3 skade per piratangrep – nesten ugjennomtrengelig",
+	 "cost": 8000, "days": 3, "type": "upgrade"},
+	# ── Forbruksvarer ────────────────────────────────────────────
+	{"id": "buy_fuel",     "name": "Drivstoff  (+10 enheter)",
+	 "desc": "Fyller på 10 enheter drivstoff",      "cost": 300,  "days": 0, "type": "consumable"},
+	{"id": "buy_supplies", "name": "Proviant  (+5 enheter)",
+	 "desc": "Fyller på 5 enheter forsyninger",     "cost": 200,  "days": 0, "type": "consumable"},
 ]
 
 func _ready() -> void:
@@ -103,10 +114,11 @@ func _process(delta: float) -> void:
 	_time += delta
 	queue_redraw()
 
-## Beregn verdi av ett mineral fra ship_cargo
+## Beregn verdi av ett mineral fra ship_cargo (inkl. daglig prismod)
 func _item_value(mineral_id: String, amount: int) -> int:
-	var val : int = int(DataLoader.get_mineral(mineral_id).get("base_value", 0))
-	return int(float(val) * float(amount) * _td["multiplier"])
+	var val       : int   = int(DataLoader.get_mineral(mineral_id).get("base_value", 0))
+	var price_mod : float = SaveManager.get_mineral_price_mod(mineral_id)
+	return int(float(val) * float(amount) * _td["multiplier"] * price_mod)
 
 ## Oppfrisk cargo-radene med per-mineral selg-knapper
 func _refresh_cargo_rows() -> void:
@@ -136,12 +148,25 @@ func _refresh_cargo_rows() -> void:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 12)
 
+		var price_mod : float = SaveManager.get_mineral_price_mod(mid)
+		var pct_diff  : int   = int((price_mod - 1.0) * 100.0)
+		var price_str : String
+		if pct_diff > 0:
+			price_str = " [+%d%%]" % pct_diff
+		elif pct_diff < 0:
+			price_str = " [%d%%]" % pct_diff
+		else:
+			price_str = ""
+
 		var info := Label.new()
-		info.text = "%s  ×%d  →  %d kr" % [
-			DataLoader.get_mineral(mid).get("name", mid), amt, val]
+		info.text = "%s  ×%d  →  %d kr%s" % [
+			DataLoader.get_mineral(mid).get("name", mid), amt, val, price_str]
 		info.custom_minimum_size = Vector2(500, 0)
 		info.add_theme_font_size_override("font_size", 13)
-		info.add_theme_color_override("font_color", Color(0.85, 0.95, 0.75))
+		var row_col := Color(0.85, 0.95, 0.75)
+		if price_mod > 1.05:   row_col = Color(0.6, 1.0, 0.5)
+		elif price_mod < 0.95: row_col = Color(1.0, 0.6, 0.5)
+		info.add_theme_color_override("font_color", row_col)
 
 		var sell_btn := Button.new()
 		sell_btn.text = "Selg"
@@ -196,6 +221,9 @@ func _sell_all() -> void:
 	SaveManager.game_data["day"]         = SaveManager.game_data.get("day", 1) + 1
 	SaveManager.game_data["time_of_day"] = 0.0
 	SaveManager.empty_ship_cargo()
+	SaveManager.refresh_mineral_prices()
+	SaveManager.update_zone_discovery()
+	SaveManager.consume_daily_supplies()
 	SaveManager.save_game()
 	SoundManager.play("kaching")
 	offer_lbl.text    = "Salg fullfort!  +%d kreditter" % earned
@@ -266,9 +294,17 @@ func _refresh_order_panel() -> void:
 					break
 		elif iid == "extra_tank_order":
 			already_have = d.get("extra_tank", false)
+		elif iid == "shield_lvl2":
+			already_have = d.get("shield_level", 1) >= 2
+		elif iid == "shield_lvl3":
+			already_have = d.get("shield_level", 1) >= 3
+		elif iid == "cannon_2":
+			already_have = d.get("laser_cannons", 1) >= 2
+		elif iid == "cannon_3":
+			already_have = d.get("laser_cannons", 1) >= 3
 		elif item["type"] == "upgrade":
 			already_have = d.get(iid, false)
-		# "ammo" – aldri already_have, men vis beholdning i knapp-tekst
+		# "consumable" – aldri already_have, kan alltid kjøpes
 
 		if already_have:
 			info.text = "%s – %s" % [item["name"], item["desc"]]
@@ -281,10 +317,12 @@ func _refresh_order_panel() -> void:
 			btn.text     = "Bestilt – dag %d" % pending_order.get("deliver_day", 0)
 			btn.disabled = true
 		else:
-			if item["type"] == "ammo":
-				var stock : int = SaveManager.game_data.get("torpedoes", 0)
-				info.text = "%s – %s  (%d kr)  [beholdning: %d]" % [
-					item["name"], item["desc"], cost, stock]
+			if days == 0 and item.get("type", "") == "consumable":
+				var cur_val : int = 0
+				if iid == "buy_fuel":     cur_val = d.get("fuel", 0)
+				elif iid == "buy_supplies": cur_val = d.get("supplies", 0)
+				info.text = "%s – %s  (%d kr, øyeblikkelig)  [nå: %d]" % [
+					item["name"], item["desc"], cost, cur_val]
 			elif days == 0:
 				info.text = "%s – %s  (%d kr, øyeblikkelig)" % [
 					item["name"], item["desc"], cost]
@@ -312,15 +350,17 @@ func _place_order(item: Dictionary) -> void:
 	if SaveManager.game_data.get("credits", 0) < cost:
 		return
 
-	# Ammo (torpedoer) – øyeblikkelig levering
-	if item.get("type", "") == "ammo":
+	# Forbruksvarer – øyeblikkelig levering, ikke i bestillingskø
+	if item.get("type", "") == "consumable":
 		SaveManager.game_data["credits"] = SaveManager.game_data.get("credits", 0) - cost
-		var amt : int = 10 if item["id"] == "torpedoes_10" else 5
-		SaveManager.game_data["torpedoes"] = SaveManager.game_data.get("torpedoes", 0) + amt
+		match item["id"]:
+			"buy_fuel":
+				SaveManager.game_data["fuel"] = SaveManager.game_data.get("fuel", 0) + 10
+				offer_lbl.text = "Drivstoff påfylt: +10 enheter  (%d kr)" % cost
+			"buy_supplies":
+				SaveManager.game_data["supplies"] = SaveManager.game_data.get("supplies", 0) + 5
+				offer_lbl.text = "Proviant kjøpt: +5 enheter  (%d kr)" % cost
 		SaveManager.save_game()
-		SoundManager.play("kaching")
-		offer_lbl.text = "Kjøpt: %s  ·  %d torpedoer totalt" % [
-			item["name"], SaveManager.game_data.get("torpedoes", 0)]
 		_refresh_order_panel()
 		return
 

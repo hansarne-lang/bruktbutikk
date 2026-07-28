@@ -49,11 +49,28 @@ func new_game() -> void:
 		"ship_cargo_capacity": 40,
 		# Mining-tilstand (synkes fra Base.gd)
 		"mining_active":       false,
-		# Våpen
-		"torpedoes":           0,
+		# Våpen – torpedoer (per type), laser, skjold
+		"torpedoes": {
+			"standard":   0,
+			"emp":        0,
+			"penetrator": 0,
+			"nuke":       0,
+			"decoy":      0,
+		},
 		"battery_capacity":    100,
 		"battery_charge":      100.0,
 		"battery_upgrade":     false,
+		"shield_level":        1,
+		"laser_cannons":       1,
+		# Mineralpriser (±30 % fluktuasjon per dag)
+		"mineral_price_mods":  {},
+		# Utforsking
+		"zones_discovered":    1,
+		# Forbruksvarer
+		"fuel":                20,
+		"supplies":            20,
+		# Risiko (svart marked)
+		"black_market_heat":   false,
 	}
 
 func save_game() -> void:
@@ -106,10 +123,32 @@ func load_game() -> bool:
 	if not game_data.has("ship_cargo"):           game_data["ship_cargo"]           = []
 	if not game_data.has("ship_cargo_capacity"):  game_data["ship_cargo_capacity"]  = 40
 	if not game_data.has("mining_active"):        game_data["mining_active"]        = false
-	if not game_data.has("torpedoes"):            game_data["torpedoes"]            = 0
 	if not game_data.has("battery_capacity"):     game_data["battery_capacity"]     = 100
 	if not game_data.has("battery_charge"):       game_data["battery_charge"]       = 100.0
 	if not game_data.has("battery_upgrade"):      game_data["battery_upgrade"]      = false
+	if not game_data.has("shield_level"):         game_data["shield_level"]         = 1
+	if not game_data.has("laser_cannons"):        game_data["laser_cannons"]        = 1
+	if not game_data.has("mineral_price_mods"):   game_data["mineral_price_mods"]   = {}
+	if not game_data.has("zones_discovered"):     game_data["zones_discovered"]     = 1
+	if not game_data.has("fuel"):                 game_data["fuel"]                 = 20
+	if not game_data.has("supplies"):             game_data["supplies"]             = 20
+	if not game_data.has("black_market_heat"):    game_data["black_market_heat"]    = false
+	# Migrer gammel torpedoes-int til ny dict-format
+	if not game_data.has("torpedoes") or game_data["torpedoes"] is int:
+		var old_count : int = game_data.get("torpedoes", 0) if game_data.get("torpedoes", 0) is int else 0
+		game_data["torpedoes"] = {
+			"standard":   old_count,
+			"emp":        0,
+			"penetrator": 0,
+			"nuke":       0,
+			"decoy":      0,
+		}
+	else:
+		# Fyll inn manglende typer
+		var td : Dictionary = game_data["torpedoes"]
+		for ttype in ["standard", "emp", "penetrator", "nuke", "decoy"]:
+			if not td.has(ttype):
+				td[ttype] = 0
 	# Migrasjon: legg til nye skipkomponenter hvis de mangler
 	var comps : Array = game_data.get("ship_components", [])
 	var comp_ids : Array = []
@@ -374,9 +413,20 @@ func _apply_order(order: Dictionary) -> void:
 		game_data["battery_upgrade"]  = true
 		game_data["battery_capacity"] = 200
 		game_data["battery_charge"]   = 200.0
-	elif item_id in ["torpedoes_5", "torpedoes_10"]:
-		var amt : int = 10 if item_id == "torpedoes_10" else 5
-		game_data["torpedoes"] = game_data.get("torpedoes", 0) + amt
+	elif item_id == "shield_lvl2":
+		game_data["shield_level"] = max(game_data.get("shield_level", 1), 2)
+	elif item_id == "shield_lvl3":
+		game_data["shield_level"] = max(game_data.get("shield_level", 1), 3)
+	elif item_id == "cannon_2":
+		game_data["laser_cannons"] = max(game_data.get("laser_cannons", 1), 2)
+	elif item_id == "cannon_3":
+		game_data["laser_cannons"] = max(game_data.get("laser_cannons", 1), 3)
+	elif item_id.begins_with("torp_"):
+		var ttype : String = item_id.substr(5)   # "torp_standard" → "standard"
+		var qty   : int    = order.get("qty", 5)
+		var td    : Dictionary = game_data.get("torpedoes", {})
+		td[ttype] = td.get(ttype, 0) + qty
+		game_data["torpedoes"] = td
 
 ## ─────────────────────────────────────────────────────────────────
 ## Legg til logginnslag
@@ -391,3 +441,125 @@ func add_trade_log(earned: int, trader: String) -> void:
 	if log_arr.size() > 50:
 		log_arr = log_arr.slice(log_arr.size() - 50)
 	game_data["trade_log"] = log_arr
+
+## Slett lagringsfil permanent (game over)
+func delete_save() -> void:
+	if FileAccess.file_exists(SAVE_PATH):
+		DirAccess.remove_absolute(SAVE_PATH)
+	game_data = {}
+
+## Hent totalt antall torpedoer av alle typer
+func total_torpedoes() -> int:
+	var td : Dictionary = game_data.get("torpedoes", {})
+	var total : int = 0
+	for t in td.values():
+		total += t
+	return total
+
+## Bruk én torpedo av gitt type, returnerer false hvis tom
+func use_torpedo(ttype: String) -> bool:
+	var td : Dictionary = game_data.get("torpedoes", {})
+	if td.get(ttype, 0) <= 0:
+		return false
+	td[ttype] -= 1
+	game_data["torpedoes"] = td
+	return true
+
+## Kjøp torpedoer direkte (trekk kreditter, legg til beholdning)
+func buy_torpedoes(ttype: String, qty: int, cost: int) -> bool:
+	if game_data.get("credits", 0) < cost:
+		return false
+	game_data["credits"] = game_data.get("credits", 0) - cost
+	var td : Dictionary = game_data.get("torpedoes", {})
+	td[ttype] = td.get(ttype, 0) + qty
+	game_data["torpedoes"] = td
+	return true
+
+## ── Mineralpriser (±30 % fluktuasjon) ───────────────────────
+
+## Oppdater alle mineralpriser for ny dag (kall ved dag-fremgang)
+func refresh_mineral_prices() -> void:
+	var mods : Dictionary = {}
+	var minerals : Dictionary = DataLoader.minerals
+	for mid in minerals.keys():
+		# Ny tilfeldig mod mellom 0.70 og 1.30
+		mods[mid] = randf_range(0.70, 1.30)
+	game_data["mineral_price_mods"] = mods
+
+## Hent prismodifikator for et mineral (1.0 = normal)
+func get_mineral_price_mod(mineral_id: String) -> float:
+	var mods : Dictionary = game_data.get("mineral_price_mods", {})
+	return mods.get(mineral_id, 1.0)
+
+## ── Soner ────────────────────────────────────────────────────
+
+## Sjekk om ny sone bør låses opp (kall ved dag-fremgang)
+func update_zone_discovery() -> void:
+	var day   : int = game_data.get("day", 1)
+	var zones : int = game_data.get("zones_discovered", 1)
+	if day >= 8 and zones < 2:
+		game_data["zones_discovered"] = 2
+
+## ── Forbruksvarer ─────────────────────────────────────────────
+
+## Forbruk drivstoff ved reise (3 per tur). Returnerer true hvis nok.
+func consume_travel_fuel(amount: int = 3) -> bool:
+	var fuel : int = game_data.get("fuel", 0)
+	fuel = max(0, fuel - amount)
+	game_data["fuel"] = fuel
+	return fuel >= 0
+
+## Forbruk 1 proviant per dag (kall ved dag-fremgang)
+func consume_daily_supplies() -> void:
+	var supplies : int = game_data.get("supplies", 0)
+	if supplies > 0:
+		game_data["supplies"] = supplies - 1
+
+## ── Hiscore ───────────────────────────────────────────────────
+
+const HISCORE_PATH := "user://hiscore.json"
+
+## Beregn poengsum: kreditter × √dag
+func calculate_score() -> int:
+	var credits : int   = game_data.get("credits", 0)
+	var day     : int   = game_data.get("day", 1)
+	return int(float(credits) * sqrt(float(day)))
+
+## Lagre hiscore til fil (kall FØR delete_save)
+func save_hiscore() -> void:
+	var score     : int    = calculate_score()
+	var moon_name : String = game_data.get("moon_name", "Ukjent")
+	var day       : int    = game_data.get("day", 1)
+	var credits   : int    = game_data.get("credits", 0)
+
+	var entries : Array = load_hiscore()
+	entries.append({
+		"score":     score,
+		"moon_name": moon_name,
+		"day":       day,
+		"credits":   credits,
+	})
+	# Sorter synkende etter score
+	entries.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return a.get("score", 0) > b.get("score", 0))
+	# Behold topp 10
+	if entries.size() > 10:
+		entries = entries.slice(0, 10)
+
+	var file := FileAccess.open(HISCORE_PATH, FileAccess.WRITE)
+	if file:
+		file.store_string(JSON.stringify(entries, "\t"))
+		file.close()
+
+## Last hiscore-lista (returnerer Array, tom om ingen)
+func load_hiscore() -> Array:
+	if not FileAccess.file_exists(HISCORE_PATH):
+		return []
+	var file := FileAccess.open(HISCORE_PATH, FileAccess.READ)
+	if file == null:
+		return []
+	var result = JSON.parse_string(file.get_as_text())
+	file.close()
+	if result is Array:
+		return result
+	return []

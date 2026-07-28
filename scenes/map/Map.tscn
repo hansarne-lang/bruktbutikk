@@ -55,6 +55,26 @@ position = Vector2(290, 208)
 custom_minimum_size = Vector2(260, 44)
 text = "Reis til Zyla Station  (90%)"
 
+[node name="Trader3Label" type="Label" parent="UI"]
+position = Vector2(570, 420)
+visible = false
+text = "Dypromstasjon"
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.9, 0.5, 1.0, 1)
+
+[node name="Trader3Sub" type="Label" parent="UI"]
+position = Vector2(570, 438)
+visible = false
+text = "Ukjent risiko  –  betaler 100% av baseverdi"
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.7, 0.4, 0.8, 0.8)
+
+[node name="Trader3Button" type="Button" parent="UI"]
+position = Vector2(570, 460)
+visible = false
+custom_minimum_size = Vector2(260, 44)
+text = "Reis til Dypromstasjon  (100%)"
+
 [node name="BackButton" type="Button" parent="UI"]
 position = Vector2(20, 20)
 custom_minimum_size = Vector2(160, 36)

@@ -8,6 +8,7 @@ var _time     : float = 0.0
 # Handelsstasjoner
 const TRADER1_POS := Vector2(980, 180)
 const TRADER2_POS := Vector2(400, 130)
+const TRADER3_POS := Vector2(700, 460)
 const BASE_POS    := Vector2(160, 470)
 
 func _ready() -> void:
@@ -21,7 +22,15 @@ func _ready() -> void:
 
 	$UI/Trader1Button.pressed.connect(func() -> void: _go_trader(1))
 	$UI/Trader2Button.pressed.connect(func() -> void: _go_trader(2))
+	$UI/Trader3Button.pressed.connect(func() -> void: _go_trader(3))
 	$UI/BackButton.pressed.connect(_go_back)
+
+	# Trader 3 låses opp fra dag 8
+	var zones : int = SaveManager.game_data.get("zones_discovered", 1)
+	var show3 : bool = zones >= 2
+	$UI/Trader3Button.visible = show3
+	$UI/Trader3Label.visible  = show3
+	$UI/Trader3Sub.visible    = show3
 
 func _process(delta: float) -> void:
 	_time += delta
@@ -53,6 +62,9 @@ func _draw() -> void:
 	draw_line(BASE_POS, TRADER1_POS, route_col, 1.5)
 	draw_line(BASE_POS, TRADER2_POS, route_col, 1.5)
 	draw_line(TRADER1_POS, TRADER2_POS, Color(0.4, 0.4, 0.6, 0.15), 1.0)
+	var zones : int = SaveManager.game_data.get("zones_discovered", 1)
+	if zones >= 2:
+		draw_line(BASE_POS, TRADER3_POS, Color(0.8, 0.3, 0.8, 0.30), 1.5)
 
 	# Maaen (basen)
 	draw_circle(BASE_POS, 40, Color(0.38, 0.36, 0.32))
@@ -67,6 +79,11 @@ func _draw() -> void:
 
 	# Trader 2 – stasjon (varmere, gul)
 	_draw_station(TRADER2_POS, Color(1.0, 0.85, 0.3), pulse)
+
+	# Trader 3 – Dypromstasjon (lilla, låst til dag 8)
+	var zones2 : int = SaveManager.game_data.get("zones_discovered", 1)
+	if zones2 >= 2:
+		_draw_station(TRADER3_POS, Color(0.8, 0.3, 0.9), pulse)
 
 	# Labels
 	_draw_map_label(BASE_POS + Vector2(0, 55), "Luna-7  (din base)")

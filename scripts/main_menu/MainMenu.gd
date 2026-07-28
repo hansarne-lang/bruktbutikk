@@ -29,6 +29,8 @@ func _ready() -> void:
 		get_tree().change_scene_to_file("res://scenes/tests/TestScene.tscn"))
 	save_button.disabled = not SaveManager.has_active_game()
 	_draw_stars()
+	var ver_lbl := $VersionLabel as Label
+	ver_lbl.text = "v%s  –  Void Miner  ·  Oppdatert: %s" % [Version.VERSION, Version.BUILD_TIME]
 
 func _draw_stars() -> void:
 	# Tegn stjernefeltet som smaae ColorRects paa Stars-noden

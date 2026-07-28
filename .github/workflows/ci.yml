@@ -75,6 +75,12 @@ jobs:
           unzip -q Godot_v4.7.1-stable_export_templates.tpz -d /tmp/tpl
           mv /tmp/tpl/templates/* ~/.local/share/godot/export_templates/4.7.1.stable/
 
+      - name: Sett build-tidsstempel i Version.gd
+        run: |
+          STAMP=$(date -u +"%Y-%m-%d %H:%M UTC")
+          sed -i "s|BUILD_TIMESTAMP_PLACEHOLDER|$STAMP|g" scripts/Version.gd
+          echo "✅ Versjonsstempel satt: $STAMP"
+
       - name: Importer prosjekt (bygg .godot-cache)
         run: |
           timeout 90 godot --headless --quit --path . 2>&1 || true

@@ -87,6 +87,8 @@ func _ready() -> void:
 	mine_timer.one_shot = false
 	mine_timer.timeout.connect(_on_mine_tick)
 
+	($UI/HUD/VersionLabel as Label).text = "v%s  %s" % [Version.VERSION, Version.BUILD_TIME]
+
 	$UI/ActionBar/MineButton.pressed.connect(_on_mine_toggled)
 	$UI/ActionBar/ShipButton.pressed.connect(_on_enter_ship)
 	$UI/ActionBar/LogButton.pressed.connect(_toggle_log_panel)

@@ -18,6 +18,7 @@ const MINE_AMT             := 1
 @onready var mine_timer   : Timer          = $MineTimer
 @onready var upgrade_panel                 = $UI/UpgradePanel
 @onready var log_panel                     = $UI/LogPanel
+@onready var engine_room_panel             = $UI/EngineRoomPanel
 
 var _current_mineral  : String = ""
 var _mining_active    : bool   = false
@@ -32,6 +33,14 @@ var _map_hovered : int   = -1
 
 # ── Overflow ─────────────────────────────────────────────────────
 var _pending_mineral : String = ""   # mineral som ikke fikk plass
+
+# ── Motorrom / Reparasjon ─────────────────────────────────────────
+var _repair_active    : bool   = false
+var _repair_target_id : String = ""
+var _repair_progress  : float  = 0.0
+var _er_refresh_acc   : float  = 0.0   # akkumulator for ER-panel refresh
+
+const REPAIR_TICK_DURATION := 3.0   # sekunder per reparasjons-tikk
 
 # ── Sonekart farger ──────────────────────────────────────────────
 const ZONE_COLORS := {
@@ -85,6 +94,14 @@ func _ready() -> void:
 		get_tree().change_scene_to_file("res://scenes/main_menu/MainMenu.tscn"))
 	$UI/UpgradePanel/VBox/TitleRow/CloseBtn.pressed.connect(func(): upgrade_panel.visible = false)
 	$UI/LogPanel/VBox/TitleRow/CloseBtn.pressed.connect(func(): log_panel.visible = false)
+	$UI/ActionBar/EngineRoomButton.pressed.connect(_toggle_engine_room)
+	$UI/EngineRoomPanel/VBox/TitleRow/CloseBtn.pressed.connect(func(): engine_room_panel.visible = false)
+
+	# Sjekk om bestilte varer er ankommet
+	var delivered : Array = SaveManager.check_and_deliver_orders()
+	if not delivered.is_empty():
+		var names : Array = delivered.map(func(o) -> String: return o.get("item_name", "?"))
+		_set_status("Levering ankommet: %s" % ", ".join(names))
 
 	# Kart: åpnes via Start mining (se _on_mine_toggled)
 	# Overflow-layer er skjult til det trengs (se _show_overflow_dialog)
@@ -102,6 +119,18 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_time += delta
+
+	# ── Reparasjon (concurrent med mining) ───────────────────────
+	if _repair_active:
+		_repair_progress += delta
+		if _repair_progress >= REPAIR_TICK_DURATION:
+			_repair_progress -= REPAIR_TICK_DURATION
+			_do_repair_tick()
+		# Oppdater panel ca. hvert halvsekund
+		_er_refresh_acc += delta
+		if engine_room_panel.visible and _er_refresh_acc >= 0.5:
+			_er_refresh_acc = 0.0
+			_refresh_engine_room()
 
 	if _mining_active:
 		_drill_angle += delta * 5.0
@@ -128,8 +157,9 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 func _update_mine_timer() -> void:
-	var fast : bool = SaveManager.game_data.get("drill_upgraded", false)
-	mine_timer.wait_time = MINE_INTERVAL_FAST if fast else MINE_INTERVAL_NORMAL
+	var fast  : bool  = SaveManager.game_data.get("drill_upgraded", false)
+	var base  : float = MINE_INTERVAL_FAST if fast else MINE_INTERVAL_NORMAL
+	mine_timer.wait_time = SaveManager.get_effective_mine_interval(base)
 
 # ── Mining ───────────────────────────────────────────────────
 func _on_mine_toggled() -> void:
@@ -148,12 +178,28 @@ func _on_mine_toggled() -> void:
 		_map_open    = true
 		_map_hovered = -1
 		$UI/ActionBar/MineButton.text = "Avbryt"
-		upgrade_panel.visible = false
-		log_panel.visible     = false
+		upgrade_panel.visible     = false
+		log_panel.visible         = false
+		engine_room_panel.visible = false
 		queue_redraw()
 
 func _on_mine_tick() -> void:
 	SoundManager.play("drill_tick", -4.0)
+	# Tilfeldig komponentskade + oppdater intervall
+	SaveManager.apply_mine_damage()
+	_update_mine_timer()
+	if _mining_active:
+		mine_timer.start()   # restart med (mulig) ny wait_time
+	# Livsstøtte-penalitet ved kritisk kondisjon
+	_check_life_support()
+	# Drill-effektivitet: lavt kondisjon = sjanse for tapte mineraler
+	var eff : float = SaveManager.get_drill_efficiency()
+	if randf() >= eff:
+		var dc : int = _get_comp_condition("drill_head")
+		_set_status("Boresystem skadet (%d%%) – mistet mineral! Reparer i Motorrom." % dc)
+		if engine_room_panel.visible:
+			_refresh_engine_room()
+		return
 	var ok := SaveManager.add_mineral(_current_mineral, MINE_AMT)
 	if not ok:
 		# Prøv stille bytte til mineral som finnes i eksisterende tank med plass
@@ -468,6 +514,156 @@ func _refresh_log_panel() -> void:
 			e.get("earned", 0),
 		])
 	lbl.text = "\n".join(lines)
+
+# ── Motorrom ─────────────────────────────────────────────────
+func _toggle_engine_room() -> void:
+	engine_room_panel.visible = not engine_room_panel.visible
+	if engine_room_panel.visible:
+		upgrade_panel.visible = false
+		log_panel.visible     = false
+		_refresh_engine_room()
+
+func _refresh_engine_room() -> void:
+	var comp_list := engine_room_panel.get_node("VBox/CompList")
+	for child in comp_list.get_children():
+		child.queue_free()
+
+	var skill : float = SaveManager.game_data.get("repair_skill", 0.0)
+	var tools : Array = SaveManager.game_data.get("repair_tools",  [])
+	var spd   : float = SaveManager.get_repair_speed()
+	(engine_room_panel.get_node("VBox/SkillLabel") as Label).text = \
+		"Reparasjonsferdighet: %.1f  |  Fart: %.0f kond/tikk" % [skill, spd]
+	var tool_names : Array = tools.map(func(t) -> String: return _tool_label(t))
+	(engine_room_panel.get_node("VBox/ToolLabel") as Label).text = \
+		"Verktøy: %s" % (", ".join(tool_names) if not tool_names.is_empty() else "ingen")
+
+	var comps : Array = SaveManager.game_data.get("ship_components", [])
+	for comp in comps:
+		var cid       : String = comp.get("id",        "")
+		var cname     : String = comp.get("name",       cid)
+		var cond      : int    = comp.get("condition",  100)
+		var level     : int    = comp.get("level",      1)
+		var is_target : bool   = (_repair_active and _repair_target_id == cid)
+
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+
+		var name_lbl := Label.new()
+		name_lbl.text = "%s [Niv.%d]" % [cname, level]
+		name_lbl.custom_minimum_size = Vector2(168, 0)
+		name_lbl.add_theme_font_size_override("font_size", 12)
+
+		var bar := ProgressBar.new()
+		bar.custom_minimum_size = Vector2(100, 18)
+		bar.max_value = 100.0
+		bar.value     = float(cond)
+		if   cond > 70: bar.modulate = Color(0.3, 1.0, 0.4)
+		elif cond > 35: bar.modulate = Color(1.0, 0.85, 0.2)
+		else:           bar.modulate = Color(1.0, 0.35, 0.2)
+
+		var cond_lbl := Label.new()
+		cond_lbl.text = "%d%%" % cond
+		cond_lbl.custom_minimum_size = Vector2(38, 0)
+		cond_lbl.add_theme_font_size_override("font_size", 12)
+
+		var rep_btn := Button.new()
+		rep_btn.custom_minimum_size = Vector2(130, 0)
+		if is_target:
+			var pct : int = int(_repair_progress / REPAIR_TICK_DURATION * 100.0)
+			rep_btn.text     = "Reparerer... %d%%" % pct
+			rep_btn.disabled = true
+		elif cond >= 100:
+			rep_btn.text     = "OK"
+			rep_btn.disabled = true
+		else:
+			rep_btn.text     = "Reparer"
+			rep_btn.disabled = _repair_active
+			var target_id : String = cid
+			rep_btn.pressed.connect(func() -> void: _start_repair(target_id))
+
+		row.add_child(name_lbl)
+		row.add_child(bar)
+		row.add_child(cond_lbl)
+		row.add_child(rep_btn)
+		comp_list.add_child(row)
+
+	# Pending-bestillinger
+	var orders : Array = SaveManager.game_data.get("pending_orders", [])
+	var rep_status := engine_room_panel.get_node("VBox/RepairStatus") as Label
+	if not orders.is_empty():
+		var lines : Array = []
+		for o in orders:
+			lines.append("%s → leveres dag %d" % [o.get("item_name", "?"), o.get("deliver_day", 0)])
+		rep_status.text    = "Ventende bestillinger:\n" + "\n".join(lines)
+		rep_status.visible = true
+	elif _repair_active:
+		rep_status.text    = "Reparerer %s..." % _comp_name(_repair_target_id)
+		rep_status.visible = true
+	else:
+		rep_status.visible = false
+
+func _start_repair(comp_id: String) -> void:
+	_repair_active    = true
+	_repair_target_id = comp_id
+	_repair_progress  = 0.0
+	_er_refresh_acc   = 0.0
+	_refresh_engine_room()
+	_set_status("Reparerer %s..." % _comp_name(comp_id))
+
+func _do_repair_tick() -> void:
+	var spd   : float = SaveManager.get_repair_speed()
+	var comps : Array = SaveManager.game_data.get("ship_components", [])
+	for comp in comps:
+		if comp.get("id", "") != _repair_target_id:
+			continue
+		var old_cond : int = comp.get("condition", 100)
+		comp["condition"] = min(100, old_cond + int(spd))
+		# Øk reparasjonsferdighet
+		var skill : float = SaveManager.game_data.get("repair_skill", 0.0)
+		SaveManager.game_data["repair_skill"] = min(10.0, skill + 0.05)
+		if comp["condition"] >= 100:
+			var finished_id : String = _repair_target_id
+			_repair_active    = false
+			_repair_target_id = ""
+			_repair_progress  = 0.0
+			# Oppdater mine-intervall dersom drivverk/reaktor ble reparert
+			if finished_id in ["engine", "reactor"]:
+				_update_mine_timer()
+				if _mining_active:
+					mine_timer.start()
+			_set_status("Reparasjon fullfort: %s er tilbake pa 100%%!" % comp.get("name", "?"))
+		else:
+			_set_status("Reparerer %s... %d%%" % [comp.get("name", "?"), comp["condition"]])
+		break
+	if engine_room_panel.visible:
+		_refresh_engine_room()
+
+func _get_comp_condition(comp_id: String) -> int:
+	for c in SaveManager.game_data.get("ship_components", []):
+		if c.get("id", "") == comp_id:
+			return c.get("condition", 100)
+	return 100
+
+func _comp_name(id: String) -> String:
+	for c in SaveManager.game_data.get("ship_components", []):
+		if c.get("id", "") == id:
+			return c.get("name", id)
+	return id
+
+func _tool_label(id: String) -> String:
+	match id:
+		"basic_toolkit":     return "Basis verktøysett"
+		"calibrated_wrench": return "Kalibrert skiftenøkkel"
+		"nano_repair_kit":   return "Nano-reparasjonssett"
+	return id
+
+func _check_life_support() -> void:
+	var ls_cond : int = _get_comp_condition("life_support")
+	if ls_cond < 30:
+		var penalty : int = int(lerp(50.0, 0.0, ls_cond / 30.0))
+		if penalty > 0:
+			SaveManager.game_data["credits"] = max(0, SaveManager.game_data.get("credits", 0) - penalty)
+			_set_status("Livsstøtte kritisk (%d%%) – kredittlekkasje: -%d kr!" % [ls_cond, penalty])
 
 # ── UI-oppdatering ───────────────────────────────────────────
 func _refresh_ui() -> void:

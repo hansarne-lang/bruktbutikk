@@ -34,6 +34,38 @@ var _td      : Dictionary = {}
 @onready var sell_btn    : Button = $UI/ButtonPanel/SellButton
 @onready var home_btn    : Button = $UI/ButtonPanel/HomeButton
 @onready var travel_btn  : Button = $UI/ButtonPanel/TravelButton
+@onready var order_btn   : Button = $UI/ButtonPanel/OrderButton
+@onready var order_panel           = $UI/OrderPanel
+@onready var catalog_vbox          = $UI/OrderPanel/VBox/Scroll/CatalogVBox
+
+const ORDER_CATALOG := [
+	# ── Reparasjonsverktøy ──────────────────────────────────────
+	{"id": "basic_toolkit",     "name": "Basis verktøysett",
+	 "desc": "+5 reparasjonsfart",         "cost": 600,   "days": 2, "type": "tool"},
+	{"id": "calibrated_wrench", "name": "Kalibrert skiftenøkkel",
+	 "desc": "+15 reparasjonsfart",        "cost": 3000,  "days": 3, "type": "tool"},
+	{"id": "nano_repair_kit",   "name": "Nano-reparasjonssett",
+	 "desc": "+35 reparasjonsfart",        "cost": 12000, "days": 5, "type": "tool"},
+	# ── Komponentoppgraderinger ─────────────────────────────────
+	{"id": "engine_upg2",     "name": "Drivverk – Nivå 2",
+	 "desc": "Raskere mining, tåler mer",  "cost": 4000,  "days": 3,
+	 "type": "comp_upg", "comp_id": "engine",       "new_level": 2},
+	{"id": "drill_upg2",      "name": "Boresystem – Nivå 2",
+	 "desc": "Bedre drill-effektivitet",   "cost": 3500,  "days": 3,
+	 "type": "comp_upg", "comp_id": "drill_head",   "new_level": 2},
+	{"id": "reactor_upg2",    "name": "Reaktor – Nivå 2",
+	 "desc": "Reduserer skadeforsterkning","cost": 7000,  "days": 4,
+	 "type": "comp_upg", "comp_id": "reactor",      "new_level": 2},
+	{"id": "life_upg2",       "name": "Livsstøtte – Nivå 2",
+	 "desc": "Høyere krit.-grense",        "cost": 2500,  "days": 3,
+	 "type": "comp_upg", "comp_id": "life_support", "new_level": 2},
+	{"id": "nav_upg2",        "name": "Navigasjon – Nivå 2",
+	 "desc": "Bedre navigasjonsytelse",    "cost": 2500,  "days": 2,
+	 "type": "comp_upg", "comp_id": "navigation",   "new_level": 2},
+	# ── Ekstra last ─────────────────────────────────────────────
+	{"id": "extra_tank_order", "name": "Ekstra mineraltank (levert)",
+	 "desc": "3. tank, 50 kap",            "cost": 2000,  "days": 3, "type": "upgrade"},
+]
 
 func _ready() -> void:
 	_chosen = SaveManager.game_data.get("chosen_trader", 1)
@@ -53,6 +85,8 @@ func _ready() -> void:
 	sell_btn.pressed.connect(_sell)
 	home_btn.pressed.connect(_go_home)
 	travel_btn.pressed.connect(_go_map)
+	order_btn.pressed.connect(_toggle_order_panel)
+	$UI/OrderPanel/VBox/TitleRow/CloseBtn.pressed.connect(func(): order_panel.visible = false)
 
 func _process(delta: float) -> void:
 	_time += delta
@@ -114,6 +148,99 @@ func _go_home() -> void:
 func _go_map() -> void:
 	SaveManager.save_game()
 	get_tree().change_scene_to_file("res://scenes/map/Map.tscn")
+
+# ── Bestillingskatalog ────────────────────────────────────────
+func _toggle_order_panel() -> void:
+	order_panel.visible = not order_panel.visible
+	if order_panel.visible:
+		_refresh_order_panel()
+
+func _refresh_order_panel() -> void:
+	for child in catalog_vbox.get_children():
+		child.queue_free()
+
+	var d       : Dictionary = SaveManager.game_data
+	var credits : int        = d.get("credits", 0)
+	var orders  : Array      = d.get("pending_orders", [])
+	var tools   : Array      = d.get("repair_tools", [])
+	var comps   : Array      = d.get("ship_components", [])
+
+	for item in ORDER_CATALOG:
+		var iid   : String = item["id"]
+		var cost  : int    = item["cost"]
+		var days  : int    = item["days"]
+		var row   := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+
+		var info := Label.new()
+		info.custom_minimum_size = Vector2(500, 0)
+		info.add_theme_font_size_override("font_size", 12)
+
+		var btn := Button.new()
+		btn.custom_minimum_size = Vector2(200, 0)
+
+		# Bestem tilstand
+		var pending_order : Dictionary = {}
+		for o in orders:
+			if o.get("item_id", "") == iid:
+				pending_order = o
+				break
+
+		var already_have : bool = false
+		if item["type"] == "tool":
+			already_have = iid in tools
+		elif item["type"] == "comp_upg":
+			var need_lvl : int = item.get("new_level", 2)
+			for c in comps:
+				if c.get("id","") == item.get("comp_id","") and c.get("level",1) >= need_lvl:
+					already_have = true
+					break
+		elif iid == "extra_tank_order":
+			already_have = d.get("extra_tank", false)
+
+		if already_have:
+			info.text = "%s – %s" % [item["name"], item["desc"]]
+			info.add_theme_color_override("font_color", Color(0.4, 0.8, 0.4, 1))
+			btn.text     = "Mottatt ✓"
+			btn.disabled = true
+		elif not pending_order.is_empty():
+			info.text = "%s – %s" % [item["name"], item["desc"]]
+			info.add_theme_color_override("font_color", Color(0.8, 0.8, 0.4, 1))
+			btn.text     = "Bestilt – dag %d" % pending_order.get("deliver_day", 0)
+			btn.disabled = true
+		else:
+			info.text = "%s – %s  (%d kr,  %d dag%s levering)" % [
+				item["name"], item["desc"], cost, days,
+				"er" if days > 1 else ""]
+			if credits < cost:
+				info.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55, 1))
+				btn.text     = "Bestill  (%d kr)" % cost
+				btn.disabled = true
+			else:
+				info.add_theme_color_override("font_color", Color(0.85, 0.9, 0.85, 1))
+				btn.text     = "Bestill  (%d kr)" % cost
+				btn.disabled = false
+				var captured : Dictionary = item.duplicate(true)
+				btn.pressed.connect(func() -> void: _place_order(captured))
+
+		row.add_child(info)
+		row.add_child(btn)
+		catalog_vbox.add_child(row)
+
+func _place_order(item: Dictionary) -> void:
+	var cost : int = item.get("cost", 0)
+	if SaveManager.game_data.get("credits", 0) < cost:
+		return
+	var extra := {}
+	if item.has("comp_id"):
+		extra["comp_id"]   = item["comp_id"]
+		extra["new_level"] = item.get("new_level", 2)
+	SaveManager.place_order(
+		item["id"], item["name"], cost, item["days"], extra)
+	SaveManager.save_game()
+	offer_lbl.text = "Bestilt: %s  –  leveres om %d dag(er)" % [
+		item["name"], item["days"]]
+	_refresh_order_panel()
 
 # ── Tegning ──────────────────────────────────────────────────
 func _draw() -> void:

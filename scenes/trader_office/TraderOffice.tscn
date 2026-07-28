@@ -56,3 +56,37 @@ text = "Reis hjem uten å selge"
 custom_minimum_size = Vector2(320, 40)
 text = "🚀 Reis til ny trader"
 visible = false
+
+[node name="OrderButton" type="Button" parent="UI/ButtonPanel"]
+custom_minimum_size = Vector2(320, 40)
+text = "Bestill utstyr"
+
+[node name="OrderPanel" type="PanelContainer" parent="UI"]
+position = Vector2(40, 140)
+custom_minimum_size = Vector2(820, 0)
+visible = false
+
+[node name="VBox" type="VBoxContainer" parent="UI/OrderPanel"]
+theme_override_constants/separation = 8
+
+[node name="TitleRow" type="HBoxContainer" parent="UI/OrderPanel/VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="UI/OrderPanel/VBox/TitleRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Bestill utstyr"
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.6, 0.8, 1.0, 1)
+
+[node name="CloseBtn" type="Button" parent="UI/OrderPanel/VBox/TitleRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(28, 28)
+text = "✕"
+
+[node name="Scroll" type="ScrollContainer" parent="UI/OrderPanel/VBox"]
+custom_minimum_size = Vector2(800, 220)
+
+[node name="CatalogVBox" type="VBoxContainer" parent="UI/OrderPanel/VBox/Scroll"]
+custom_minimum_size = Vector2(780, 0)
+theme_override_constants/separation = 6

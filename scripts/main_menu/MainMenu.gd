@@ -11,6 +11,7 @@ const MOON_NAMES := [
 @onready var load_button     : Button   = $VBoxContainer/LoadButton
 @onready var save_button     : Button   = $VBoxContainer/SaveButton
 @onready var quit_button     : Button   = $VBoxContainer/QuitButton
+@onready var test_button     : Button   = $VBoxContainer/TestButton
 @onready var stars_node                 = $Stars
 @onready var name_dialog                = $NameDialog
 @onready var name_edit       : LineEdit = $NameDialog/VBox/NameEdit
@@ -24,6 +25,8 @@ func _ready() -> void:
 	quit_button.pressed.connect(_on_quit_pressed)
 	confirm_btn.pressed.connect(_on_confirm_name)
 	cancel_btn.pressed.connect(func(): name_dialog.visible = false)
+	test_button.pressed.connect(func() -> void:
+		get_tree().change_scene_to_file("res://scenes/tests/TestScene.tscn"))
 	save_button.disabled = not SaveManager.has_active_game()
 	_draw_stars()
 

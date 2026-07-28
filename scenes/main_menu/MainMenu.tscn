@@ -58,6 +58,12 @@ text = "Lagre"
 custom_minimum_size = Vector2(280, 40)
 text = "Avslutt"
 
+[node name="TestButton" type="Button" parent="VBoxContainer"]
+custom_minimum_size = Vector2(280, 32)
+text = "🧪 Kjør regresjonstester"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.5, 0.7, 0.5, 1)
+
 [node name="VersionLabel" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = 4

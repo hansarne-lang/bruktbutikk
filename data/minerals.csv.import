@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://dkqsex1064htq"
+
+[deps]
+
+files=["res://data/minerals.name.translation", "res://data/minerals.category.translation", "res://data/minerals.description.translation", "res://data/minerals.base.translation", "res://data/minerals.rarity.translation", "res://data/minerals.color.translation"]
+
+source_file="res://data/minerals.csv"
+dest_files=["res://data/minerals.name.translation", "res://data/minerals.category.translation", "res://data/minerals.description.translation", "res://data/minerals.base.translation", "res://data/minerals.rarity.translation", "res://data/minerals.color.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

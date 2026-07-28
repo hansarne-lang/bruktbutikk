@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<title>Void Miner – Forbedringsliste</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f5f5; color: #1a1a1a; padding: 32px; }
+h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.subtitle { font-size: 14px; color: #666; margin-bottom: 24px; }
+
+.stats { display: flex; gap: 18px; font-size: 13px; color: #555; margin-bottom: 28px; padding: 12px 16px; background: #fff; border-radius: 8px; border: 1px solid #e5e5e5; }
+.stats span { display: flex; align-items: center; gap: 6px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.d-pending { background: #ccc; }
+.d-doing   { background: #f59e0b; }
+.d-done    { background: #22c55e; }
+
+.cat-header { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin: 28px 0 10px; padding-bottom: 6px; border-bottom: 1px solid #ddd; }
+
+.item { background: #fff; border: 1px solid #e0e0e0; border-radius: 9px; padding: 11px 14px; margin-bottom: 7px; display: flex; align-items: center; gap: 12px; }
+.item:hover { border-color: #bbb; }
+
+input[type=checkbox] { width: 18px; height: 18px; cursor: pointer; accent-color: #6366f1; flex-shrink: 0; }
+
+.item-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.item-label { flex: 1; font-size: 14px; line-height: 1.45; }
+
+.badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 12px; flex-shrink: 0; }
+.b-pending { background: #f0f0f0; color: #777; }
+.b-doing   { background: #fef3c7; color: #92400e; }
+.b-done    { background: #dcfce7; color: #166534; }
+
+.actions { display: flex; gap: 7px; flex-shrink: 0; }
+button { font-size: 12px; padding: 5px 12px; border-radius: 6px; border: 1px solid #ddd; background: #fff; color: #444; cursor: pointer; font-family: inherit; }
+button:hover { background: #f5f5f5; }
+.btn-start  { border-color: #6366f1; color: #6366f1; }
+.btn-start:hover  { background: #eef2ff; }
+.btn-ferdig { border-color: #22c55e; color: #166534; }
+.btn-ferdig:hover { background: #dcfce7; }
+.btn-reset  { color: #aaa; }
+.btn-disc   { border-color: #ddd; color: #555; }
+.btn-disc.open { border-color: #6366f1; color: #6366f1; background: #eef2ff; }
+
+.disc-panel { display: none; background: #f9f9ff; border: 1px solid #e0e5ff; border-radius: 0 0 9px 9px; padding: 12px 16px; font-size: 13px; line-height: 1.65; color: #333; margin-top: -7px; margin-bottom: 7px; }
+.disc-panel.open { display: block; }
+.disc-label { font-size: 10px; font-weight: 700; color: #6366f1; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+
+/* Sticky bar */
+#exec-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 13px 32px; background: #fff; border-top: 1px solid #ddd; box-shadow: 0 -2px 10px rgba(0,0,0,0.07); display: none; align-items: center; gap: 14px; z-index: 100; }
+#exec-bar.show { display: flex; }
+#exec-info { flex: 1; font-size: 13px; color: #555; }
+#btn-clear { color: #aaa; border: none; background: none; font-size: 13px; }
+#btn-utfor { background: #6366f1; color: #fff; border-color: #6366f1; font-size: 14px; padding: 8px 22px; border-radius: 7px; font-weight: 600; }
+#btn-utfor:hover { background: #4f46e5; }
+
+/* Modal */
+#modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; }
+#modal-overlay.show { display: flex; }
+#modal { background: #fff; border-radius: 12px; width: 580px; max-width: 95vw; box-shadow: 0 10px 40px rgba(0,0,0,0.18); overflow: hidden; }
+#modal-head { display: flex; align-items: center; padding: 16px 20px; border-bottom: 1px solid #eee; }
+#modal-head h2 { flex: 1; font-size: 16px; font-weight: 600; }
+#btn-close { background: none; border: none; font-size: 22px; color: #aaa; cursor: pointer; padding: 0; line-height: 1; }
+#btn-close:hover { color: #333; }
+#modal-list { padding: 18px 20px; max-height: 300px; overflow-y: auto; }
+.modal-item { padding: 9px 13px; border: 1px solid #e8e8e8; border-radius: 8px; margin-bottom: 7px; }
+.modal-cat  { font-size: 10px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
+.modal-lbl  { font-size: 14px; color: #1a1a1a; font-weight: 500; }
+#modal-copy { padding: 14px 20px; border-top: 1px solid #eee; background: #fafafa; }
+#modal-copy p { font-size: 12px; color: #888; margin-bottom: 8px; }
+#chat-textarea { width: 100%; height: 80px; font-size: 13px; font-family: inherit; border: 1px solid #ddd; border-radius: 7px; padding: 9px 12px; resize: none; color: #333; background: #fff; }
+#chat-textarea:focus { outline: 2px solid #6366f1; border-color: transparent; }
+</style>
+</head>
+<body>
+
+<h1>Void Miner – Forbedringsliste</h1>
+<p class="subtitle">Huk av punkter og trykk Utfør, eller trykk Diskuter for mer info</p>
+
+<div class="stats">
+  <span><span class="dot d-done"></span><span id="s-done">0</span> ferdig</span>
+  <span><span class="dot d-doing"></span><span id="s-doing">0</span> pågår</span>
+  <span><span class="dot d-pending"></span><span id="s-pending">0</span> venter</span>
+</div>
+
+<div id="list"></div>
+
+<div style="height: 60px;"></div>
+
+<div id="exec-bar">
+  <span id="exec-info"></span>
+  <button id="btn-clear" onclick="clearSel()">✕ Fjern valg</button>
+  <button id="btn-utfor" onclick="openModal()">Utfør valgte ↗</button>
+</div>
+
+<div id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div id="modal">
+    <div id="modal-head">
+      <h2 id="modal-title"></h2>
+      <button id="btn-close" onclick="closeModal()">×</button>
+    </div>
+    <div id="modal-list"></div>
+    <div id="modal-copy">
+      <p>Kopier teksten under og lim inn i chat:</p>
+      <textarea id="chat-textarea" readonly onclick="this.select(); document.execCommand('copy'); this.style.background='#f0fff4'; setTimeout(()=>this.style.background='#fff',800);" title="Klikk for å kopiere"></textarea>
+    </div>
+  </div>
+</div>
+
+<script>
+const ITEMS = [
+  { cat: "Gameplay", label: "Flere traders med ulike priser og risiko (70% / 90% pris)" },
+  { cat: "Gameplay", label: "Tilfeldige hendelser under overfart: asteroide, havari, vennlig handelsskip" },
+  { cat: "Gameplay", label: "Oppgraderbare tanker og drill (kjøp med kreditter)" },
+  { cat: "Gameplay", label: "Nye mineraler låses opp med høyere base-nivå" },
+  { cat: "Gameplay", label: "Dag/natt-syklus på månen som påvirker mining-hastighet" },
+  { cat: "Visuelt", label: "Animer drillhodet når mining er aktiv (rotasjon)" },
+  { cat: "Visuelt", label: "Partikkeleffekt når mineraler graves ut" },
+  { cat: "Visuelt", label: "Skipet letter og lander animert når du reiser" },
+  { cat: "UI/UX", label: "Vis mineralverdi i tankpanelet (ikke bare mengde)" },
+  { cat: "UI/UX", label: "Kreditter-endring vises som '+1470 kr' som flyr opp etter handel" },
+  { cat: "UI/UX", label: "Lagre automatisk hvert minutt (autosave)" },
+  { cat: "UI/UX", label: "Pausemeny med ESC i base-scenen" },
+  { cat: "Innhold", label: "Flere handelsmenn med personligheter og dialoger" },
+  { cat: "Innhold", label: "Kartskjermbilde mellom basen og overfart" },
+  { cat: "Innhold", label: "Loggbok/historikk over alle handler" },
+  { cat: "Innhold", label: "Prestasjoner: Første handel, Full tank, Legendær mineral" },
+  { cat: "Teknisk", label: "Fjerne gamle bruktbutikk-scener fra repoet (rydder bort 72 advarsler)" },
+];
+
+const DISCUSS = [
+  "Enkelt å implementere: legg til en andre trader i Travel.gd med en annen multiplier (f.eks. 0.90). Gir spilleren et valg med risiko/belønning og gjør reisebeslutningen mer interessant.",
+  "Middels kompleksitet. Legg til en tilfeldighetssjekk i Travel._process() eller ved scenebytte. Kan gi stort løft til spenning uten mye kode – høy prioritet.",
+  "Krever nytt UI i Base-scenen og lagring av oppgraderingsnivå i SaveManager. Gir god progresjonsfølelse og er kjernen i et godt idle-spill. Anbefalt.",
+  "Lett å legge til: filtrer mineraler basert på SaveManager.game_data['day'] eller et eget base_level-felt. Motiverer spilleren til å fortsette videre. Anbefalt.",
+  "Kan implementeres som en `time_of_day` float i SaveManager som øker per dag. Påvirker mining_speed i Base.gd. Visuelt effekt på himmelen er valgfritt. Middels prioritet.",
+  "Legg til en Sprite2D eller AnimatedSprite2D for drillhodet i Base.tscn, og roter den i _process() mens mining er aktiv. Enkel å gjøre og ser bra ut.",
+  "Godot 4 har GPUParticles2D. Legg til en partikkelnode ved drillpunktet og aktiver den ved mining_start. Noe jobb med innstillinger, men høy visuell effekt.",
+  "Animer ship_y-posisjonen i Travel._ready() med en Tween. Kort å kode, ser profesjonelt ut. Enkelt og anbefalt.",
+  "Legg til en verdi-kolonne i tankpanelet i Base.tscn. Hent base_value fra DataLoader per mineral og multipliser med mengde. Enkelt og nyttig for spilleren.",
+  "Lag en Label som flyr opp og fades ut ved kredittendring – bruk Tween på position og modulate. Litt kode, men gir god game-feel. Anbefalt.",
+  "Legg til en Timer-node i Base.tscn som kaller SaveManager.save_game() hvert 60. sekund. Tar 5 minutter å implementere. Gjør det med en gang.",
+  "Koble Input.action_pressed('ui_cancel') i Base.gd til en enkel PauseMenu CanvasLayer. Middels jobb, men forventes av spillere. Høy prioritet.",
+  "Krev flere dialog-linjer per trader i characters.csv, og vis dem tilfeldig ved handel. Gir liv til spillet. Middels jobb.",
+  "Legg til en kartscene mellom Base og Travel. Kan starte som statisk bilde og utvides. Gir en fin romfølelse og gjør reisen mer meningsfull.",
+  "Lagre en liste av handler i SaveManager med dato, mineral og verdi. Vis i en ny scene eller panel. Middels jobb, lav prioritet for tidlig spillfase.",
+  "Sjekk betingelser ved spesielle hendelser (første handel, full tank osv.) og vis et popup. Kan bruke achievements-array i SaveManager. Hyggelig, men lav prioritet.",
+  "Kjør `godot --export-release` etter å ha slettet de gamle scenene fra .tscn-referanser. Fjerner støy i Godot-editoren og gjør prosjektet ryddigere. Gjør det raskt.",
+];
+
+const STATUS_LABEL = { pending: "Ikke startet", doing: "Pågår", done: "Ferdig" };
+const CYCLES = { pending: "doing", doing: "done", done: "pending" };
+const BTN_LABEL = { pending: "Start", doing: "Ferdig ✓", done: "Nullstill" };
+const BTN_CLASS = { pending: "btn-start", doing: "btn-ferdig", done: "btn-reset" };
+
+let state = JSON.parse(localStorage.getItem("vm_state") || "{}");
+let selected = {};
+let openDisc = {};
+
+function saveState() { localStorage.setItem("vm_state", JSON.stringify(state)); }
+
+function render() {
+  const cats = [...new Set(ITEMS.map(i => i.cat))];
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  cats.forEach(cat => {
+    const h = document.createElement("div");
+    h.className = "cat-header";
+    h.textContent = cat;
+    list.appendChild(h);
+
+    ITEMS.forEach((item, idx) => {
+      if (item.cat !== cat) return;
+      const st = state[idx] || "pending";
+      const isOpen = !!openDisc[idx];
+      const isChecked = !!selected[idx];
+
+      const row = document.createElement("div");
+      row.className = "item";
+      if (isOpen) row.style.borderRadius = "9px 9px 0 0";
+      row.innerHTML = `
+        <input type="checkbox" ${isChecked ? "checked" : ""} onchange="toggleSel(${idx},this.checked)">
+        <span class="item-dot d-${st}"></span>
+        <span class="item-label">${item.label}</span>
+        <span class="badge b-${st}">${STATUS_LABEL[st]}</span>
+        <div class="actions">
+          <button class="btn-disc${isOpen?" open":""}" onclick="toggleDisc(${idx})">Diskuter</button>
+          <button class="${BTN_CLASS[st]}" onclick="cycle(${idx})">${BTN_LABEL[st]}</button>
+        </div>`;
+      list.appendChild(row);
+
+      const disc = document.createElement("div");
+      disc.className = "disc-panel" + (isOpen ? " open" : "");
+      disc.innerHTML = `<div class="disc-label">Diskusjon</div>${DISCUSS[idx]}`;
+      list.appendChild(disc);
+    });
+  });
+
+  const done    = ITEMS.filter((_,i) => (state[i]||"pending") === "done").length;
+  const doing   = ITEMS.filter((_,i) => (state[i]||"pending") === "doing").length;
+  const pending = ITEMS.length - done - doing;
+  document.getElementById("s-done").textContent = done;
+  document.getElementById("s-doing").textContent = doing;
+  document.getElementById("s-pending").textContent = pending;
+
+  const selCount = Object.values(selected).filter(Boolean).length;
+  const bar = document.getElementById("exec-bar");
+  if (selCount > 0) {
+    bar.classList.add("show");
+    document.getElementById("exec-info").textContent = `${selCount} punkt${selCount>1?"er":""} valgt`;
+  } else {
+    bar.classList.remove("show");
+  }
+}
+
+function cycle(idx) {
+  state[idx] = CYCLES[state[idx]||"pending"];
+  saveState();
+  render();
+}
+
+function toggleSel(idx, val) {
+  selected[idx] = val;
+  render();
+}
+
+function clearSel() {
+  selected = {};
+  render();
+}
+
+function toggleDisc(idx) {
+  openDisc[idx] = !openDisc[idx];
+  render();
+}
+
+function openModal() {
+  const chosen = ITEMS.map((item,i)=>({item,i})).filter(({i})=>selected[i]);
+  if (!chosen.length) return;
+  document.getElementById("modal-title").textContent = `Utfør ${chosen.length} forbedring${chosen.length>1?"er":""}`;
+  document.getElementById("modal-list").innerHTML = chosen.map(({item})=>`
+    <div class="modal-item">
+      <div class="modal-cat">${item.cat}</div>
+      <div class="modal-lbl">${item.label}</div>
+    </div>`).join("");
+  const text = "Utfør disse forbedringene i Void Miner-spillet:\n" +
+    chosen.map(({item},n) => `${n+1}. ${item.label}`).join("\n");
+  document.getElementById("chat-textarea").value = text;
+  document.getElementById("modal-overlay").classList.add("show");
+}
+
+function closeModal() {
+  document.getElementById("modal-overlay").classList.remove("show");
+}
+
+render();
+</script>
+</body>
+</html>

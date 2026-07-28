@@ -252,23 +252,34 @@ func _make_tone(freq_start: float, freq_end: float, dur: float,
 			1: raw = 1.0 if sin(phase) >= 0.0 else -1.0
 		data[i] = int(clamp(raw * env * 127.0 + 128.0, 0.0, 255.0))
 	var s := AudioStreamWAV.new()
-	s.format = 0; s.mix_rate = sr; s.stereo = false; s.data = data
+	s.format   = 0
+	s.mix_rate = sr
+	s.stereo   = false
+	s.data     = data
 	return s
 
 func _make_seq(tones: Array) -> AudioStreamWAV:
-	var sr := 22050; var full := PackedByteArray()
+	var sr   := 22050
+	var full := PackedByteArray()
 	for t in tones:
 		full.append_array(_make_tone(t[0], t[1], t[2],
 			t[3] if t.size() > 3 else 0.6,
 			t[4] if t.size() > 4 else 0).data)
 	var s := AudioStreamWAV.new()
-	s.format = 0; s.mix_rate = sr; s.stereo = false; s.data = full
+	s.format   = 0
+	s.mix_rate = sr
+	s.stereo   = false
+	s.data     = full
 	return s
 
 func _make_player(stream: AudioStreamWAV, vol_db: float = 0.0) -> AudioStreamPlayer:
 	var p := AudioStreamPlayer.new()
-	p.stream = stream; p.volume_db = vol_db; p.bus = "Master"; p.autoplay = false
-	add_child(p); return p
+	p.stream    = stream
+	p.volume_db = vol_db
+	p.bus       = "Master"
+	p.autoplay  = false
+	add_child(p)
+	return p
 
 func _setup_audio() -> void:
 	_snd_wall   = _make_player(_make_tone(700.0, 700.0, 0.04, 0.45, 1), -4.0)
@@ -283,4 +294,5 @@ func _setup_audio() -> void:
 
 func _play(p: AudioStreamPlayer) -> void:
 	if p == null: return
-	p.stop(); p.play()
+	p.stop()
+	p.play()

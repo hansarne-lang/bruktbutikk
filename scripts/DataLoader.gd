@@ -28,10 +28,19 @@ func _load_csv(path: String, target: Dictionary) -> void:
 func get_mineral(id: String) -> Dictionary:
 	return minerals.get(id, {})
 
-## Tilfeldig mineral basert paa sjeldenhet
+## Tilfeldig mineral basert paa sjeldenhet og dag (laas opp gradvis)
 func random_mineral() -> String:
 	if minerals.is_empty():
 		return ""
+	var day : int = SaveManager.game_data.get("day", 1)
+	# Sjeldenheter laases opp etter dag
+	var unlock_day := {
+		"common":    1,
+		"uncommon":  3,
+		"rare":      7,
+		"very_rare": 14,
+		"legendary": 25,
+	}
 	var weights := {
 		"common":    60,
 		"uncommon":  25,
@@ -41,10 +50,25 @@ func random_mineral() -> String:
 	}
 	var pool : Array = []
 	for id in minerals:
-		var rarity : String = minerals[id].get("rarity", "common")
-		var w      : int    = weights.get(rarity, 10)
+		var rarity    : String = minerals[id].get("rarity", "common")
+		var min_day   : int    = unlock_day.get(rarity, 1)
+		if day < min_day:
+			continue  # Ikke laast opp enda
+		var w : int = weights.get(rarity, 10)
 		for _i in w:
 			pool.append(id)
 	if pool.is_empty():
+		# Fallback: bare common
+		for id in minerals:
+			if minerals[id].get("rarity", "common") == "common":
+				pool.append(id)
+	if pool.is_empty():
 		return minerals.keys()[0]
 	return pool[randi() % pool.size()]
+
+## Sjekk om et mineral er laast opp
+func is_mineral_unlocked(id: String) -> bool:
+	var day : int = SaveManager.game_data.get("day", 1)
+	var unlock_day := {"common": 1, "uncommon": 3, "rare": 7, "very_rare": 14, "legendary": 25}
+	var rarity : String = minerals.get(id, {}).get("rarity", "common")
+	return day >= unlock_day.get(rarity, 1)

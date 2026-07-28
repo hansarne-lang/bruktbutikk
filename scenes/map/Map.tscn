@@ -1,0 +1,61 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/map/Map.gd" id="1"]
+
+[node name="Map" type="Node2D"]
+script = ExtResource("1")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="TitleLabel" type="Label" parent="UI"]
+position = Vector2(0, 14)
+custom_minimum_size = Vector2(1280, 36)
+text = "STJERNEKART  –  VELG DESTINASJON"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.6, 0.8, 1.0, 0.9)
+
+[node name="BaseLabel" type="Label" parent="UI"]
+position = Vector2(80, 498)
+text = "Luna-7  (din base)"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.6, 0.7, 0.6, 0.8)
+
+[node name="Trader1Label" type="Label" parent="UI"]
+position = Vector2(870, 238)
+text = "Grom Korrec"
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.55, 0.8, 1.0, 1)
+
+[node name="Trader1Sub" type="Label" parent="UI"]
+position = Vector2(870, 256)
+text = "Tryggest  –  betaler 70% av baseverdi"
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.5, 0.65, 0.8, 0.8)
+
+[node name="Trader2Label" type="Label" parent="UI"]
+position = Vector2(290, 168)
+text = "Zyla Station"
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(1.0, 0.88, 0.4, 1)
+
+[node name="Trader2Sub" type="Label" parent="UI"]
+position = Vector2(290, 186)
+text = "Risikabelt  –  betaler 90% av baseverdi"
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.8, 0.72, 0.4, 0.8)
+
+[node name="Trader1Button" type="Button" parent="UI"]
+position = Vector2(870, 280)
+custom_minimum_size = Vector2(260, 44)
+text = "Reis til Grom Korrec  (70%)"
+
+[node name="Trader2Button" type="Button" parent="UI"]
+position = Vector2(290, 208)
+custom_minimum_size = Vector2(260, 44)
+text = "Reis til Zyla Station  (90%)"
+
+[node name="BackButton" type="Button" parent="UI"]
+position = Vector2(20, 20)
+custom_minimum_size = Vector2(160, 36)
+text = "← Tilbake til basen"

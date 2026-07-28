@@ -197,7 +197,7 @@ func _process(delta: float) -> void:
 				col_map[c] = inv
 		if not col_map.is_empty():
 			var shooters := col_map.values()
-			var shooter  := shooters[randi() % shooters.size()]
+			var shooter  : Dictionary = shooters[randi() % shooters.size()]
 			i_bullets.append({
 				"x": shooter["x"] + INV_W / 2.0,
 				"y": shooter["y"] + INV_H,
@@ -210,8 +210,8 @@ func _process(delta: float) -> void:
 
 	# Kollisjon: spillerbullet vs invaders
 	if p_bullet.get("active", false):
-		var bx := p_bullet["x"]
-		var by := p_bullet["y"]
+		var bx : float = p_bullet["x"]
+		var by : float = p_bullet["y"]
 		for inv in invaders:
 			if not inv["alive"]: continue
 			if bx >= inv["x"] and bx <= inv["x"] + INV_W and \
@@ -430,7 +430,10 @@ func _make_tone(freq_start: float, freq_end: float, dur: float,
 			2: raw = fmod(phase / TAU, 1.0) * 2.0 - 1.0
 		data[i] = int(clamp(raw * env * 127.0 + 128.0, 0.0, 255.0))
 	var s := AudioStreamWAV.new()
-	s.format = 0; s.mix_rate = sr; s.stereo = false; s.data = data
+	s.format   = 0
+	s.mix_rate = sr
+	s.stereo   = false
+	s.data     = data
 	return s
 
 func _make_seq(tones: Array) -> AudioStreamWAV:
@@ -441,12 +444,18 @@ func _make_seq(tones: Array) -> AudioStreamWAV:
 			t[3] if t.size() > 3 else 0.6,
 			t[4] if t.size() > 4 else 0).data)
 	var s := AudioStreamWAV.new()
-	s.format = 0; s.mix_rate = sr; s.stereo = false; s.data = full
+	s.format   = 0
+	s.mix_rate = sr
+	s.stereo   = false
+	s.data     = full
 	return s
 
 func _make_player(stream: AudioStreamWAV, vol_db: float = 0.0) -> AudioStreamPlayer:
 	var p := AudioStreamPlayer.new()
-	p.stream = stream; p.volume_db = vol_db; p.bus = "Master"; p.autoplay = false
+	p.stream    = stream
+	p.volume_db = vol_db
+	p.bus       = "Master"
+	p.autoplay  = false
 	add_child(p)
 	return p
 
@@ -472,4 +481,5 @@ func _setup_audio() -> void:
 
 func _play(p: AudioStreamPlayer) -> void:
 	if p == null: return
-	p.stop(); p.play()
+	p.stop()
+	p.play()

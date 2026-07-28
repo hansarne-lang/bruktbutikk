@@ -126,14 +126,14 @@ func _draw_ship(cx: float, cy: float) -> void:
 		Vector2(cx + 60, cy),
 		Vector2(cx + 60, cy + 20),
 		Vector2(cx - 60, cy + 28),
-	]), PackedColorArray([C_HULL]))
+	]), C_HULL)
 
 	# Nese
 	draw_colored_polygon(PackedVector2Array([
 		Vector2(cx + 60, cy),
 		Vector2(cx + 60, cy + 20),
 		Vector2(cx + 90, cy + 10),
-	]), PackedColorArray([C_WING]))
+	]), C_WING)
 
 	# Oevrevinge
 	draw_colored_polygon(PackedVector2Array([
@@ -141,7 +141,7 @@ func _draw_ship(cx: float, cy: float) -> void:
 		Vector2(cx + 20, cy),
 		Vector2(cx + 10, cy - 26),
 		Vector2(cx - 20, cy - 20),
-	]), PackedColorArray([C_WING]))
+	]), C_WING)
 
 	# Undervinge
 	draw_colored_polygon(PackedVector2Array([
@@ -149,7 +149,7 @@ func _draw_ship(cx: float, cy: float) -> void:
 		Vector2(cx + 20, cy + 28),
 		Vector2(cx + 10, cy + 52),
 		Vector2(cx - 20, cy + 46),
-	]), PackedColorArray([C_WING]))
+	]), C_WING)
 
 	# Cockpit-vinduer
 	draw_rect(Rect2(cx + 30, cy + 4, 22, 12), C_WIN)

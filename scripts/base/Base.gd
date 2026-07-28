@@ -221,22 +221,22 @@ func _draw_dome(cx: float, base_y: float, w: float, h: float) -> void:
 	for i in steps + 1:
 		var angle := PI * float(i) / float(steps)
 		var pt    := Vector2(cx + cos(PI - angle) * w / 2,
-		                     base_y - 10 - sin(angle) * h)
+							 base_y - 10 - sin(angle) * h)
 		if i > 0:
 			draw_colored_polygon(
 				PackedVector2Array([Vector2(cx, base_y - 10), prev, pt]),
-				PackedColorArray([C_DOME]))
+				C_DOME)
 		prev = pt
 	# Kuppeloverlys (reflex)
 	prev = Vector2(cx - w * 0.32, base_y - 10)
 	for i in steps + 1:
 		var angle := PI * float(i) / float(steps)
 		var ptb   := Vector2(cx + cos(PI - angle) * w * 0.32,
-		                     base_y - 10 - sin(angle) * h * 0.88)
+							 base_y - 10 - sin(angle) * h * 0.88)
 		if i > 0:
 			draw_colored_polygon(
 				PackedVector2Array([Vector2(cx, base_y - 10), prev, ptb]),
-				PackedColorArray([Color(C_DOME_H.r, C_DOME_H.g, C_DOME_H.b, 0.30)]))
+				Color(C_DOME_H.r, C_DOME_H.g, C_DOME_H.b, 0.30))
 		prev = ptb
 	# Vindu i kupelen
 	draw_circle(Vector2(cx, base_y - h * 0.5), 16, Color(0.5, 0.8, 1.0, 0.5))
@@ -261,7 +261,7 @@ func _draw_tank(x: float, base_y: float, tank: Dictionary) -> void:
 			fill_col = Color.html(hex)
 			fill_col.a = 0.85
 		draw_rect(Rect2(x + 3, base_y - 3 - (th - 9) * fill,
-		               tw - 6, (th - 9) * fill), fill_col)
+					   tw - 6, (th - 9) * fill), fill_col)
 	# Ramme
 	draw_rect(Rect2(x, base_y - th, tw, th), Color(0.5, 0.65, 0.6, 0.7), false, 1.5)
 	# Roer ned
@@ -277,7 +277,7 @@ func _draw_drill(x: float, base_y: float) -> void:
 			Vector2(x + 10, base_y),
 			Vector2(x, base_y + 22),
 		]),
-		PackedColorArray([Color(0.7, 0.6, 0.3)]))
+		Color(0.7, 0.6, 0.3))
 	# Support-arm
 	draw_rect(Rect2(x - 22, base_y - 62, 44, 6), C_DRILL)
 
@@ -290,7 +290,7 @@ func _draw_ship(cx: float, base_y: float) -> void:
 			Vector2(cx + 24, base_y),
 			Vector2(cx - 24, base_y),
 		]),
-		PackedColorArray([C_SHIP]))
+		C_SHIP)
 	# Cockpit
 	draw_colored_polygon(
 		PackedVector2Array([
@@ -299,7 +299,7 @@ func _draw_ship(cx: float, base_y: float) -> void:
 			Vector2(cx + 8,  base_y - 22),
 			Vector2(cx - 8,  base_y - 22),
 		]),
-		PackedColorArray([Color(0.4, 0.6, 0.8)]))
+		Color(0.4, 0.6, 0.8))
 	# Cockpit-refleks
 	draw_rect(Rect2(cx - 5, base_y - 18, 8, 12), Color(0.7, 0.9, 1.0, 0.5))
 	# Vingene
@@ -309,14 +309,14 @@ func _draw_ship(cx: float, base_y: float) -> void:
 			Vector2(cx - 58, base_y + 52),
 			Vector2(cx - 38, base_y + 52),
 		]),
-		PackedColorArray([C_SHIP_W]))
+		C_SHIP_W)
 	draw_colored_polygon(
 		PackedVector2Array([
 			Vector2(cx + 36, base_y + 40),
 			Vector2(cx + 58, base_y + 52),
 			Vector2(cx + 38, base_y + 52),
 		]),
-		PackedColorArray([C_SHIP_W]))
+		C_SHIP_W)
 	# Dyse-glow
 	draw_rect(Rect2(cx - 10, base_y + 40, 20, 6), Color(0.6, 0.7, 0.8))
 

@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/sprite_room/SpriteRoom.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/images/player.png" id="2"]
@@ -7,6 +7,8 @@
 [ext_resource type="Texture2D" path="res://assets/images/computer_old.png" id="5"]
 [ext_resource type="Script" path="res://scripts/sprite_room/BreakoutCanvas.gd" id="6"]
 [ext_resource type="Script" path="res://scripts/sprite_room/SnakeCanvas.gd" id="7"]
+[ext_resource type="Script" path="res://scripts/sprite_room/SpaceInvadersCanvas.gd" id="8"]
+[ext_resource type="Script" path="res://scripts/sprite_room/PongCanvas.gd" id="9"]
 
 [node name="SpriteRoom" type="Node2D"]
 script = ExtResource("1")
@@ -48,7 +50,7 @@ position = Vector2(10, 8)
 theme_override_constants/separation = 20
 
 [node name="TitleLabel" type="Label" parent="UI/HUD"]
-text = "Sprite-rom"
+text = "Skipets maskinrom"
 theme_override_font_sizes/font_size = 16
 
 [node name="BackButton" type="Button" parent="UI/HUD"]
@@ -164,4 +166,48 @@ theme_override_colors/font_color = Color(0.4, 1.0, 0.4, 1)
 
 [node name="SnakeCanvas" type="Control" parent="UI/SnakePanel/SnakeVBox"]
 script = ExtResource("7")
+custom_minimum_size = Vector2(780, 480)
+
+[node name="InvadersPanel" type="PanelContainer" parent="UI"]
+position = Vector2(40, 30)
+size = Vector2(800, 560)
+visible = false
+
+[node name="InvadersVBox" type="VBoxContainer" parent="UI/InvadersPanel"]
+theme_override_constants/separation = 0
+
+[node name="InvadersTitleBar" type="ColorRect" parent="UI/InvadersPanel/InvadersVBox"]
+color = Color(0.0, 0.18, 0.0, 1)
+custom_minimum_size = Vector2(0, 32)
+
+[node name="InvadersTitleLabel" type="Label" parent="UI/InvadersPanel/InvadersVBox/InvadersTitleBar"]
+position = Vector2(8, 6)
+text = " ★ SPACE INVADERS  –  COMMODORE ARCADE  ★"
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.4, 1.0, 0.4, 1)
+
+[node name="InvadersCanvas" type="Control" parent="UI/InvadersPanel/InvadersVBox"]
+script = ExtResource("8")
+custom_minimum_size = Vector2(780, 480)
+
+[node name="PongPanel" type="PanelContainer" parent="UI"]
+position = Vector2(40, 30)
+size = Vector2(800, 560)
+visible = false
+
+[node name="PongVBox" type="VBoxContainer" parent="UI/PongPanel"]
+theme_override_constants/separation = 0
+
+[node name="PongTitleBar" type="ColorRect" parent="UI/PongPanel/PongVBox"]
+color = Color(0.0, 0.18, 0.0, 1)
+custom_minimum_size = Vector2(0, 32)
+
+[node name="PongTitleLabel" type="Label" parent="UI/PongPanel/PongVBox/PongTitleBar"]
+position = Vector2(8, 6)
+text = " ★ PONG  –  COMMODORE ARCADE  ★"
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.4, 1.0, 0.4, 1)
+
+[node name="PongCanvas" type="Control" parent="UI/PongPanel/PongVBox"]
+script = ExtResource("9")
 custom_minimum_size = Vector2(780, 480)

@@ -15,10 +15,16 @@ const INTERACT_DIST:= 130.0    # Avstand for å trigge interaksjon
 @onready var breakout_canvas               = $UI/BreakoutPanel/BreakoutVBox/BreakoutCanvas
 @onready var snake_panel                   = $UI/SnakePanel
 @onready var snake_canvas                  = $UI/SnakePanel/SnakeVBox/SnakeCanvas
+@onready var invaders_panel                = $UI/InvadersPanel
+@onready var invaders_canvas               = $UI/InvadersPanel/InvadersVBox/InvadersCanvas
+@onready var pong_panel                    = $UI/PongPanel
+@onready var pong_canvas                   = $UI/PongPanel/PongVBox/PongCanvas
 
 var terminal_open  : bool = false
 var breakout_open  : bool = false
 var snake_open     : bool = false
+var invaders_open  : bool = false
+var pong_open      : bool = false
 
 # ── BASIC-tolker ─────────────────────────────────────────────
 var basic_vars     : Dictionary = {}   # variabellagring
@@ -27,11 +33,14 @@ var basic_output   : PackedStringArray = []
 
 func _ready() -> void:
 	$UI/HUD/BackButton.pressed.connect(func():
-		get_tree().change_scene_to_file("res://scenes/shop/Shop.tscn"))
+		SaveManager.save_game()
+		get_tree().change_scene_to_file("res://scenes/base/Base.tscn"))
 	$UI/Terminal/TerminalVBox/CloseBar/CloseButton.pressed.connect(_close_terminal)
 	input_field.text_submitted.connect(_on_input_submitted)
 	breakout_canvas.game_closed.connect(_close_breakout)
 	snake_canvas.game_closed.connect(_close_snake)
+	invaders_canvas.game_closed.connect(_close_invaders)
+	pong_canvas.game_closed.connect(_close_pong)
 
 	_print_to_terminal("    **** COMMODORE 64 BASIC V2 ****")
 	_print_to_terminal("")
@@ -42,7 +51,7 @@ func _ready() -> void:
 
 # ── Bevegelse og nærhet ───────────────────────────────────────
 func _process(delta: float) -> void:
-	if terminal_open or snake_open:
+	if terminal_open or snake_open or invaders_open or pong_open:
 		return
 
 	var dir := 0.0
@@ -68,8 +77,8 @@ func _input(event: InputEvent) -> void:
 	if not event is InputEventKey: return
 	var key := event as InputEventKey
 	if not key.pressed or key.echo: return
-	if breakout_open or snake_open:
-		return   # BreakoutCanvas / SnakeCanvas håndterer input selv
+	if breakout_open or snake_open or invaders_open or pong_open:
+		return   # Spill-canvas håndterer input selv
 	if terminal_open:
 		if key.keycode == KEY_ESCAPE:
 			_close_terminal()
@@ -129,6 +138,40 @@ func _close_snake() -> void:
 	_print_to_terminal("")
 	_print_to_terminal("READY.")
 
+func _open_invaders() -> void:
+	terminal_open          = false
+	terminal.visible       = false
+	invaders_open          = true
+	invaders_panel.visible = true
+	invaders_canvas.restart()
+
+func _close_invaders() -> void:
+	invaders_open          = false
+	invaders_panel.visible = false
+	terminal_open          = true
+	terminal.visible       = true
+	input_field.grab_focus()
+	_print_to_terminal("SPACE INVADERS AVSLUTTET  SCORE: %d" % invaders_canvas.score)
+	_print_to_terminal("")
+	_print_to_terminal("READY.")
+
+func _open_pong() -> void:
+	terminal_open       = false
+	terminal.visible    = false
+	pong_open           = true
+	pong_panel.visible  = true
+	pong_canvas.restart()
+
+func _close_pong() -> void:
+	pong_open           = false
+	pong_panel.visible  = false
+	terminal_open       = true
+	terminal.visible    = true
+	input_field.grab_focus()
+	_print_to_terminal("PONG AVSLUTTET")
+	_print_to_terminal("")
+	_print_to_terminal("READY.")
+
 # ── Input-behandling ─────────────────────────────────────────
 func _on_input_submitted(text: String) -> void:
 	var cmd := text.strip_edges().to_upper()
@@ -166,6 +209,8 @@ func _run_immediate(cmd: String) -> void:
 			_print_to_terminal("  LOAD \"BREAKOUT\"   – start Breakout-spillet")
 			_print_to_terminal("  LOAD \"BREAKOUT\",8 – (alternativ syntaks)")
 			_print_to_terminal("  LOAD \"SNAKE\"      – start Snake-spillet")
+			_print_to_terminal("  LOAD \"INVADERS\"   – start Space Invaders")
+			_print_to_terminal("  LOAD \"PONG\"       – start Pong (1 eller 2 spillere)")
 		"CLS":
 			basic_output.clear()
 			output_label.text = ""
@@ -199,6 +244,20 @@ func _run_immediate(cmd: String) -> void:
 				_print_to_terminal("")
 				await get_tree().create_timer(0.8).timeout
 				_open_snake()
+			elif cmd.begins_with("LOAD") and ("INVADERS" in cmd):
+				_print_to_terminal("SEARCHING FOR INVADERS...")
+				_print_to_terminal("LOADING FROM DRIVE 8...")
+				_print_to_terminal("READY.")
+				_print_to_terminal("")
+				await get_tree().create_timer(0.8).timeout
+				_open_invaders()
+			elif cmd.begins_with("LOAD") and ("PONG" in cmd):
+				_print_to_terminal("SEARCHING FOR PONG...")
+				_print_to_terminal("LOADING FROM DRIVE 8...")
+				_print_to_terminal("READY.")
+				_print_to_terminal("")
+				await get_tree().create_timer(0.8).timeout
+				_open_pong()
 			else:
 				_eval_statement(cmd)
 

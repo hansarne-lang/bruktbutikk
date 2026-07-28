@@ -1,0 +1,21 @@
+id,name,category,description,base_value,rarity,color
+velorite,Velorite,Krystall,Blaaglinsende krystall brukt i energiskjold og lysbryting,850,uncommon,4488FF
+thoranium,Thoranium,Metall,Tungt metallisk malm - noekkelen for fusjonsreaktorer,1200,rare,CC8833
+crystite,Crystite,Krystall,Prismatisk formasjon med unike optiske egenskaper,600,uncommon,AADDFF
+novanite,Novanite,Element,Svart reaktivt grunnstoff - ustabilt ved romtemperatur,950,rare,FF4422
+solite,Solite,Mineral,Absorberer staalelsesstaaaling og lagrer energi over tid,450,common,FFDD44
+lunarium,Lunarium,Metall,Finnes kun paa maaaner - ekstremt formbart ved lav temperatur,1500,rare,CCCCFF
+quantite,Quantite,Krystall,Mineralet eksisterer tilsynelatende to steder samtidig,2200,very_rare,FF88FF
+ferroxite,Ferroxite,Metall,Jernliknende forbindelse - robust og lett aa bearbeide,280,common,AA6644
+glacite,Glacite,Krystall,Iskrystallmineral som holder seg frossen over 400 grader,320,common,88CCFF
+aethrite,Aethrite,Gass,Fanger seg i poeroese steiner - flyter i lav tyngdekraft,1800,rare,88FFAA
+obsidite,Obsidite,Mineral,Sort vulkansk mineral fra maanens tidlige geologiske epoke,380,common,445566
+radiite,Radiite,Element,Svakt radioaktivt - gir et mildt roedt skjaer i moerket,760,uncommon,FF6644
+plutite,Plutite,Metall,Sjeldent tungt grunnstoff brukt i avanserte reaktorer,1650,rare,887766
+chronite,Chronite,Krystall,Hemmer atomhenfald i naarliggende materialer,2400,very_rare,FFFFAA
+voltite,Voltite,Element,Genererer statisk elektrisitet ved kontakt med metall,920,uncommon,FFFF44
+morganite,Morganite,Krystall,Myk lilla krystall - verdifull innen biomedisin,540,uncommon,CC88FF
+xenovite,Xenovite,Ukjent,Ukjent opprinnelse - alle analyser gir motstridende resultater,3100,very_rare,FFFFFF
+ionite,Ionite,Element,Ionrikt forbindelsesmateriale brukt i ionmotorer,710,uncommon,44FFFF
+cryonite,Cryonite,Mineral,Ekstreme kuldeegenskaper - brukt i kryogenisk lagring,880,uncommon,AAFFFF
+novium,Novium,Metall,Det sjeldneste av alt - gullskimrende og nesten uknuselig,4500,legendary,FFD700

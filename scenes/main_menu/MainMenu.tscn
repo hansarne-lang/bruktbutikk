@@ -10,7 +10,9 @@ script = ExtResource("1")
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
-color = Color(0.1, 0.08, 0.06, 1)
+color = Color(0.02, 0.02, 0.06, 1)
+
+[node name="Stars" type="Node2D" parent="."]
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -19,27 +21,54 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -150.0
-offset_top = -150.0
-offset_right = 150.0
-offset_bottom = 150.0
-theme_override_constants/separation = 20
+offset_left = -180.0
+offset_top = -200.0
+offset_right = 180.0
+offset_bottom = 200.0
+theme_override_constants/separation = 22
 
 [node name="Title" type="Label" parent="VBoxContainer"]
-text = "Bruktbutikk"
+text = "VOID MINER"
 horizontal_alignment = 1
+theme_override_font_sizes/font_size = 42
+theme_override_colors/font_color = Color(0.4, 0.8, 1.0, 1)
+
+[node name="Subtitle" type="Label" parent="VBoxContainer"]
+text = "Deep Space Extraction"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.4, 0.6, 0.7, 1)
+
+[node name="Spacer" type="Control" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
 
 [node name="NewGameButton" type="Button" parent="VBoxContainer"]
+custom_minimum_size = Vector2(280, 40)
 text = "Nytt spill"
 
 [node name="LoadButton" type="Button" parent="VBoxContainer"]
+custom_minimum_size = Vector2(280, 40)
 text = "Last inn"
 
 [node name="SaveButton" type="Button" parent="VBoxContainer"]
+custom_minimum_size = Vector2(280, 40)
 text = "Lagre"
 
-[node name="SettingsButton" type="Button" parent="VBoxContainer"]
-text = "Innstillinger"
-
 [node name="QuitButton" type="Button" parent="VBoxContainer"]
+custom_minimum_size = Vector2(280, 40)
 text = "Avslutt"
+
+[node name="VersionLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 4
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 0.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = -24.0
+offset_right = 300.0
+offset_bottom = -4.0
+text = "v0.1  –  Luna-7 Mining Station"
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.3, 0.4, 0.5, 1)

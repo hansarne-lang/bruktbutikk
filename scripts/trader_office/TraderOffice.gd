@@ -87,6 +87,22 @@ const ORDER_CATALOG := [
 	{"id": "shield_lvl3",     "name": "Skjold Nivå 3",
 	 "desc": "Blokkerer 3 skade per piratangrep – nesten ugjennomtrengelig",
 	 "cost": 8000, "days": 3, "type": "upgrade"},
+	# ── Torpedoer ────────────────────────────────────────────────
+	{"id": "torp_standard",   "name": "Standard-torpedoer  ×5",
+	 "desc": "3 skade, halvt skjold ignorert.  Allsidig og pålitelig.",
+	 "cost": 400,  "days": 1, "type": "torpedo", "torpedo_qty": 5},
+	{"id": "torp_emp",        "name": "EMP-torpedoer  ×3",
+	 "desc": "2 skade + piraten mister neste angrep.",
+	 "cost": 700,  "days": 1, "type": "torpedo", "torpedo_qty": 3},
+	{"id": "torp_penetrator", "name": "Penetrator-torpedoer  ×3",
+	 "desc": "3 skade, gjennomtrenger alt skjold.",
+	 "cost": 1100, "days": 2, "type": "torpedo", "torpedo_qty": 3},
+	{"id": "torp_nuke",       "name": "Nuke-torpedoer  ×1",
+	 "desc": "5 skade, ignorerer alt skjold. Svært kostbar.",
+	 "cost": 2800, "days": 2, "type": "torpedo", "torpedo_qty": 1},
+	{"id": "torp_decoy",      "name": "Lokkedekke-torpedoer  ×4",
+	 "desc": "Piraten mister sin tur. Ingen skade på ditt skip.",
+	 "cost": 600,  "days": 1, "type": "torpedo", "torpedo_qty": 4},
 	# ── Forbruksvarer ────────────────────────────────────────────
 	{"id": "buy_fuel",     "name": "Drivstoff  (+10 enheter)",
 	 "desc": "Fyller på 10 enheter drivstoff",      "cost": 300,  "days": 0, "type": "consumable"},
@@ -304,7 +320,7 @@ func _refresh_order_panel() -> void:
 			already_have = d.get("laser_cannons", 1) >= 3
 		elif item["type"] == "upgrade":
 			already_have = d.get(iid, false)
-		# "consumable" – aldri already_have, kan alltid kjøpes
+		# "torpedo" og "consumable" – aldri already_have, kan alltid kjøpes
 
 		if already_have:
 			info.text = "%s – %s" % [item["name"], item["desc"]]
@@ -317,7 +333,13 @@ func _refresh_order_panel() -> void:
 			btn.text     = "Bestilt – dag %d" % pending_order.get("deliver_day", 0)
 			btn.disabled = true
 		else:
-			if days == 0 and item.get("type", "") == "consumable":
+			if item.get("type", "") == "torpedo":
+				var ttype  : String = iid.substr(5)   # "torp_standard" → "standard"
+				var cur_td : int    = d.get("torpedoes", {}).get(ttype, 0)
+				info.text = "%s – %s  (%d kr,  %d dag%s)  [beholdning: %d]" % [
+					item["name"], item["desc"], cost, days,
+					"er" if days > 1 else "", cur_td]
+			elif days == 0 and item.get("type", "") == "consumable":
 				var cur_val : int = 0
 				if iid == "buy_fuel":     cur_val = d.get("fuel", 0)
 				elif iid == "buy_supplies": cur_val = d.get("supplies", 0)
@@ -368,6 +390,8 @@ func _place_order(item: Dictionary) -> void:
 	if item.has("comp_id"):
 		extra["comp_id"]   = item["comp_id"]
 		extra["new_level"] = item.get("new_level", 2)
+	if item.has("torpedo_qty"):
+		extra["qty"] = item["torpedo_qty"]
 	SaveManager.place_order(
 		item["id"], item["name"], cost, item["days"], extra)
 	SaveManager.save_game()

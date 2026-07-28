@@ -1,62 +1,29 @@
 extends Node2D
 ## Void Miner – Torpedorom
-## Kjøp og administrer ulike torpedotyper.
+## Viser nåværende torpedolager.
+## Torpedoer bestilles hos trader og leveres neste dag.
 
 const TORPEDO_CATALOG := [
-	{
-		"id":   "standard",
-		"name": "Standard",
-		"desc": "Ignorerer halvt av piratskjoldet. Allsidig og pålitelig.",
-		"col":  Color(0.55, 0.70, 0.95),
-		"qty":  5,
-		"cost": 400,
-	},
-	{
-		"id":   "emp",
-		"name": "EMP",
-		"desc": "Elektromagnetisk puls. 2 skade + piraten mister neste angrep.",
-		"col":  Color(0.35, 0.95, 0.60),
-		"qty":  3,
-		"cost": 700,
-	},
-	{
-		"id":   "penetrator",
-		"name": "Penetrator",
-		"desc": "Gjennomtrenger alt skjold. 3 skade direkte på piratens HP.",
-		"col":  Color(1.00, 0.55, 0.20),
-		"qty":  3,
-		"cost": 1100,
-	},
-	{
-		"id":   "nuke",
-		"name": "Nuke",
-		"desc": "Massiv eksplosjon. 5 skade, ignorerer alt skjold. Svært kostbar.",
-		"col":  Color(1.00, 0.25, 0.25),
-		"qty":  1,
-		"cost": 2800,
-	},
-	{
-		"id":   "decoy",
-		"name": "Lokkedekke",
-		"desc": "Avleder piraten. Taper sin tur. Ingen skade på ditt skip denne runden.",
-		"col":  Color(0.90, 0.85, 0.25),
-		"qty":  4,
-		"cost": 600,
-	},
+	{"id": "standard",   "name": "Standard",    "col": Color(0.55, 0.70, 0.95),
+	 "desc": "3 skade  ·  halvt skjold ignorert  ·  Allsidig og pålitelig."},
+	{"id": "emp",        "name": "EMP",         "col": Color(0.35, 0.95, 0.60),
+	 "desc": "2 skade  ·  piraten mister neste angrep."},
+	{"id": "penetrator", "name": "Penetrator",  "col": Color(1.00, 0.55, 0.20),
+	 "desc": "3 skade  ·  gjennomtrenger alt skjold."},
+	{"id": "nuke",       "name": "Nuke",        "col": Color(1.00, 0.25, 0.25),
+	 "desc": "5 skade  ·  ignorerer alt skjold  ·  Svært kostbar."},
+	{"id": "decoy",      "name": "Lokkedekke",  "col": Color(0.90, 0.85, 0.25),
+	 "desc": "Piraten mister sin tur  ·  ingen skade på ditt skip denne runden."},
 ]
 
 var _time         : float = 0.0
-var _feedback_t   : float = 0.0
 var _count_labels : Array = []
 
-@onready var credits_lbl  : Label          = $UI/HUD/CreditsLabel
-@onready var list_vbox    : VBoxContainer  = $UI/TorpedoList
-@onready var feedback_lbl : Label          = $UI/FeedbackLabel
+@onready var list_vbox : VBoxContainer = $UI/TorpedoList
 
 func _ready() -> void:
 	$UI/HUD/BackButton.pressed.connect(_go_back)
 	_build_list()
-	_refresh_credits()
 
 func _build_list() -> void:
 	_count_labels.clear()
@@ -64,15 +31,15 @@ func _build_list() -> void:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 16)
 
-		# Name
+		# Navn
 		var nm := Label.new()
-		nm.custom_minimum_size = Vector2(140, 0)
+		nm.custom_minimum_size = Vector2(160, 0)
 		nm.add_theme_font_size_override("font_size", 18)
 		nm.add_theme_color_override("font_color", tt["col"])
 		nm.text = tt["name"]
 		row.add_child(nm)
 
-		# Current count
+		# Nåværende beholdning
 		var cnt := Label.new()
 		cnt.custom_minimum_size = Vector2(75, 0)
 		cnt.add_theme_font_size_override("font_size", 18)
@@ -80,33 +47,22 @@ func _build_list() -> void:
 		_count_labels.append(cnt)
 		row.add_child(cnt)
 
-		# Description
+		# Beskrivelse
 		var dsc := Label.new()
-		dsc.custom_minimum_size = Vector2(480, 0)
+		dsc.custom_minimum_size = Vector2(600, 0)
 		dsc.add_theme_font_size_override("font_size", 13)
 		dsc.add_theme_color_override("font_color", Color(0.55, 0.62, 0.70))
 		dsc.text = tt["desc"]
 		row.add_child(dsc)
 
-		# Cost label
-		var cst := Label.new()
-		cst.custom_minimum_size = Vector2(140, 0)
-		cst.add_theme_font_size_override("font_size", 13)
-		cst.add_theme_color_override("font_color", Color(0.70, 0.85, 0.50))
-		cst.text = "%d kr / ×%d" % [tt["cost"], tt["qty"]]
-		row.add_child(cst)
-
-		# Buy button
-		var btn := Button.new()
-		btn.text = "Kjøp"
-		btn.custom_minimum_size = Vector2(100, 38)
-		var ttype : String = tt["id"]
-		var qty   : int    = tt["qty"]
-		var cost  : int    = tt["cost"]
-		btn.pressed.connect(func(): _buy(ttype, qty, cost))
-		row.add_child(btn)
-
 		list_vbox.add_child(row)
+
+	# Info-linje nederst
+	var info := Label.new()
+	info.text = "📦  Bestill torpedoer hos trader  –  leveres neste dag"
+	info.add_theme_font_size_override("font_size", 13)
+	info.add_theme_color_override("font_color", Color(0.6, 0.7, 0.5, 0.8))
+	list_vbox.add_child(info)
 
 	_refresh_counts()
 
@@ -116,33 +72,11 @@ func _refresh_counts() -> void:
 		var cnt : int = td.get(TORPEDO_CATALOG[i]["id"], 0)
 		_count_labels[i].text = "×%d" % cnt
 
-func _refresh_credits() -> void:
-	credits_lbl.text = "%d kr" % SaveManager.game_data.get("credits", 0)
-
-func _buy(ttype: String, qty: int, cost: int) -> void:
-	if SaveManager.buy_torpedoes(ttype, qty, cost):
-		_refresh_counts()
-		_refresh_credits()
-		_set_feedback("✅  Kjøpt %s ×%d" % [ttype, qty], Color(0.3, 1.0, 0.4))
-	else:
-		_set_feedback("❌  Ikke nok kreditter!", Color(1.0, 0.4, 0.3))
-
-func _set_feedback(msg: String, col: Color) -> void:
-	feedback_lbl.text = msg
-	feedback_lbl.add_theme_color_override("font_color", col)
-	feedback_lbl.visible = true
-	_feedback_t = 2.5
-
 func _go_back() -> void:
-	SaveManager.save_game()
 	get_tree().change_scene_to_file("res://scenes/sprite_room/SpriteRoom.tscn")
 
 func _process(delta: float) -> void:
 	_time += delta
-	if _feedback_t > 0.0:
-		_feedback_t -= delta
-		if _feedback_t <= 0.0:
-			feedback_lbl.visible = false
 	queue_redraw()
 
 func _draw() -> void:

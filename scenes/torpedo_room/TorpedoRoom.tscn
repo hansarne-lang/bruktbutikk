@@ -12,20 +12,11 @@ position = Vector2(16, 14)
 theme_override_constants/separation = 24
 
 [node name="TitleLabel" type="Label" parent="UI/HUD"]
-text = "⚡  Torpedorom"
+text = "⚡  Torpedorom  –  Lagerstatus"
 theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0.55, 0.75, 1.0, 1)
 
 [node name="HudSpacer" type="Control" parent="UI/HUD"]
-layout_mode = 2
-custom_minimum_size = Vector2(40, 0)
-
-[node name="CreditsLabel" type="Label" parent="UI/HUD"]
-text = "0 kr"
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.7, 0.85, 0.5, 1)
-
-[node name="HudSpacer2" type="Control" parent="UI/HUD"]
 layout_mode = 2
 custom_minimum_size = Vector2(560, 0)
 
@@ -35,16 +26,10 @@ text = "← Tilbake til skipet"
 
 [node name="HeaderLine" type="Label" parent="UI"]
 position = Vector2(36, 84)
-text = "TYPE                ANT.   BESKRIVELSE                                                                 PRIS / PAKKE"
+text = "TYPE                ANT.   BESKRIVELSE"
 theme_override_font_sizes/font_size = 12
 theme_override_colors/font_color = Color(0.35, 0.45, 0.55, 1)
 
 [node name="TorpedoList" type="VBoxContainer" parent="UI"]
 position = Vector2(36, 108)
 theme_override_constants/separation = 22
-
-[node name="FeedbackLabel" type="Label" parent="UI"]
-position = Vector2(36, 668)
-visible = false
-text = ""
-theme_override_font_sizes/font_size = 16

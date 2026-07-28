@@ -36,7 +36,7 @@ theme_override_colors/font_color = Color(0.55, 0.65, 0.75, 1)
 layer = 2
 
 [node name="Label_Engine" type="Label" parent="StationLabels"]
-position = Vector2(170, 498)
+position = Vector2(125, 498)
 custom_minimum_size = Vector2(100, 20)
 text = "Drivverk"
 horizontal_alignment = 1
@@ -44,7 +44,7 @@ theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0.7, 0.75, 0.85, 1)
 
 [node name="Label_Reactor" type="Label" parent="StationLabels"]
-position = Vector2(380, 498)
+position = Vector2(270, 498)
 custom_minimum_size = Vector2(100, 20)
 text = "Reaktor"
 horizontal_alignment = 1
@@ -52,7 +52,7 @@ theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0.7, 0.75, 0.85, 1)
 
 [node name="Label_Drill" type="Label" parent="StationLabels"]
-position = Vector2(595, 498)
+position = Vector2(415, 498)
 custom_minimum_size = Vector2(100, 20)
 text = "Boresystem"
 horizontal_alignment = 1
@@ -60,7 +60,7 @@ theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0.7, 0.75, 0.85, 1)
 
 [node name="Label_LifeSupport" type="Label" parent="StationLabels"]
-position = Vector2(810, 498)
+position = Vector2(560, 498)
 custom_minimum_size = Vector2(100, 20)
 text = "Livsstøtte"
 horizontal_alignment = 1
@@ -68,9 +68,33 @@ theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0.7, 0.75, 0.85, 1)
 
 [node name="Label_Navigation" type="Label" parent="StationLabels"]
-position = Vector2(1025, 498)
+position = Vector2(705, 498)
 custom_minimum_size = Vector2(100, 20)
 text = "Navigasjon"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.7, 0.75, 0.85, 1)
+
+[node name="Label_Shield" type="Label" parent="StationLabels"]
+position = Vector2(850, 498)
+custom_minimum_size = Vector2(100, 20)
+text = "Skjold"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.7, 0.75, 0.85, 1)
+
+[node name="Label_Laser" type="Label" parent="StationLabels"]
+position = Vector2(995, 498)
+custom_minimum_size = Vector2(100, 20)
+text = "Laserkanon"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.7, 0.75, 0.85, 1)
+
+[node name="Label_Torpedo" type="Label" parent="StationLabels"]
+position = Vector2(1140, 498)
+custom_minimum_size = Vector2(100, 20)
+text = "Torpedorør"
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0.7, 0.75, 0.85, 1)

@@ -47,6 +47,8 @@ func new_game() -> void:
 		# Skip-lasterom
 		"ship_cargo":          [],
 		"ship_cargo_capacity": 40,
+		# Mining-tilstand (synkes fra Base.gd)
+		"mining_active":       false,
 	}
 
 func save_game() -> void:
@@ -98,6 +100,19 @@ func load_game() -> bool:
 	if not game_data.has("pending_orders"):       game_data["pending_orders"]       = []
 	if not game_data.has("ship_cargo"):           game_data["ship_cargo"]           = []
 	if not game_data.has("ship_cargo_capacity"):  game_data["ship_cargo_capacity"]  = 40
+	if not game_data.has("mining_active"):        game_data["mining_active"]        = false
+	# Migrasjon: legg til nye skipkomponenter hvis de mangler
+	var comps : Array = game_data.get("ship_components", [])
+	var comp_ids : Array = []
+	for c in comps:
+		comp_ids.append(c.get("id", ""))
+	if not comp_ids.has("shield"):
+		comps.append({"id": "shield",       "name": "Skjold",      "condition": 100, "level": 1})
+	if not comp_ids.has("laser_cannon"):
+		comps.append({"id": "laser_cannon", "name": "Laserkanon",  "condition": 100, "level": 1})
+	if not comp_ids.has("torpedo"):
+		comps.append({"id": "torpedo",      "name": "Torpedorør",  "condition": 100, "level": 1})
+	game_data["ship_components"] = comps
 	return true
 
 func _gen_drill_sites() -> Array:
@@ -225,10 +240,13 @@ func empty_ship_cargo() -> void:
 func _default_ship_components() -> Array:
 	return [
 		{"id": "engine",       "name": "Drivverk",   "condition": 100, "level": 1},
+		{"id": "reactor",      "name": "Reaktor",    "condition": 100, "level": 1},
 		{"id": "drill_head",   "name": "Boresystem", "condition": 100, "level": 1},
 		{"id": "life_support", "name": "Livsstøtte", "condition": 100, "level": 1},
 		{"id": "navigation",   "name": "Navigasjon", "condition": 100, "level": 1},
-		{"id": "reactor",      "name": "Reaktor",    "condition": 100, "level": 1},
+		{"id": "shield",       "name": "Skjold",     "condition": 100, "level": 1},
+		{"id": "laser_cannon", "name": "Laserkanon", "condition": 100, "level": 1},
+		{"id": "torpedo",      "name": "Torpedorør", "condition": 100, "level": 1},
 	]
 
 ## Skader et tilfeldig skipkomponent (kall fraa mine-tikk)

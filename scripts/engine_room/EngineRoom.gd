@@ -8,11 +8,14 @@ const REPAIR_TICK   := 3.0   # sekunder per reparasjons-tikk
 
 # Komponent-stasjoner: posisjon og id
 const STATIONS : Array = [
-	{"id": "engine",       "name": "Drivverk",   "x": 220.0},
-	{"id": "reactor",      "name": "Reaktor",    "x": 430.0},
-	{"id": "drill_head",   "name": "Boresystem", "x": 645.0},
-	{"id": "life_support", "name": "Livsstøtte", "x": 860.0},
-	{"id": "navigation",   "name": "Navigasjon", "x": 1075.0},
+	{"id": "engine",       "name": "Drivverk",   "x": 175.0},
+	{"id": "reactor",      "name": "Reaktor",    "x": 320.0},
+	{"id": "drill_head",   "name": "Boresystem", "x": 465.0},
+	{"id": "life_support", "name": "Livsstøtte", "x": 610.0},
+	{"id": "navigation",   "name": "Navigasjon", "x": 755.0},
+	{"id": "shield",       "name": "Skjold",     "x": 900.0},
+	{"id": "laser_cannon", "name": "Laserkanon", "x": 1045.0},
+	{"id": "torpedo",      "name": "Torpedorør", "x": 1190.0},
 ]
 const EXIT_X : float = 85.0   # dør tilbake til skipets rom
 
@@ -55,7 +58,7 @@ func _process(delta: float) -> void:
 		elif Input.is_action_pressed("ui_right") or Input.is_key_pressed(KEY_D):
 			dir = 1.0
 			player.flip_h = false
-		player.position.x = clamp(player.position.x + dir * SPEED * delta, 30.0, 1250.0)
+		player.position.x = clamp(player.position.x + dir * SPEED * delta, 30.0, 1255.0)
 
 	# Finn nærmeste stasjon
 	_near_station = -1
@@ -319,6 +322,9 @@ func _draw_station(idx: int, cx: float, cond: int, lvl: int,
 		2: _draw_drill(cx, cond, lvl, glow)
 		3: _draw_life_support(cx, cond, lvl, glow)
 		4: _draw_navigation(cx, cond, lvl, glow)
+		5: _draw_shield(cx, cond, lvl, glow)
+		6: _draw_laser_cannon(cx, cond, lvl, glow)
+		7: _draw_torpedo(cx, cond, lvl, glow)
 
 	# ── Kondisjon-bar under navneplaten ──────────────────────
 	var bar_x : float = cx - 50.0
@@ -433,6 +439,8 @@ func _draw_reactor(cx: float, cond: int, lvl: int, glow: Color) -> void:
 		draw_circle(Vector2(cx, 330), 36, Color(1.0, 0.4, 0.1, 0.15 * flicker))
 
 func _draw_drill(cx: float, cond: int, lvl: int, glow: Color) -> void:
+	var mining : bool = SaveManager.game_data.get("mining_active", false)
+
 	# Veggfeste øverst
 	draw_rect(Rect2(cx - 55, 155, 110, 18), Color(0.15, 0.18, 0.24))
 	draw_rect(Rect2(cx - 50, 159,  100, 8), Color(0.20, 0.24, 0.32))
@@ -441,13 +449,15 @@ func _draw_drill(cx: float, cond: int, lvl: int, glow: Color) -> void:
 	draw_rect(Rect2(cx - 12, 173, 24, 200), Color(0.12, 0.14, 0.20))
 	draw_rect(Rect2(cx -  5, 173, 10, 200), Color(0.16, 0.19, 0.27))
 
-	# Drill-hode (roterende effekt)
-	var rot_angle : float = _time * 2.0 * (float(cond) / 100.0)
-	var dh_y      : float = 373.0
+	# Drill-hode (roterende effekt – raskere ved aktiv mining)
+	var speed      : float = 8.0 if mining else 2.0
+	var rot_angle  : float = _time * speed * (float(cond) / 100.0)
+	var dh_y       : float = 373.0
 	draw_rect(Rect2(cx - 22, dh_y - 5, 44, 30), Color(0.18, 0.21, 0.28))
 	draw_rect(Rect2(cx - 18, dh_y,     36, 20), Color(0.14, 0.17, 0.23))
 
 	# Drill-bit (spiralform via linjer)
+	var bit_col : Color = glow if not mining else Color(1.0, 0.55, 0.1)
 	for i in 8:
 		var a  : float = rot_angle + i * TAU / 8.0
 		var r1 : float = 14.0
@@ -457,21 +467,34 @@ func _draw_drill(cx: float, cond: int, lvl: int, glow: Color) -> void:
 		draw_line(
 			Vector2(cx + cos(a) * r1, y1),
 			Vector2(cx + cos(a + PI * 0.7) * r2, y2),
-			Color(glow.r, glow.g, glow.b, 0.7), 2.0)
+			Color(bit_col.r, bit_col.g, bit_col.b, 0.85), 2.0)
 
 	# Drill-spiss
+	var tip_col : Color = Color(0.24, 0.28, 0.36) if not mining \
+		else Color(1.0, 0.45, 0.10).lerp(Color(0.8, 0.7, 0.2), 0.5 + sin(_time * 6.0) * 0.5)
 	var tip := PackedVector2Array([
 		Vector2(cx - 16, dh_y + 55),
 		Vector2(cx + 16, dh_y + 55),
 		Vector2(cx,      dh_y + 85),
 	])
-	draw_colored_polygon(tip, Color(0.24, 0.28, 0.36))
+	draw_colored_polygon(tip, tip_col)
 	draw_polyline(tip, Color(0.35, 0.42, 0.55), 1.5)
 
 	# Glow rundt drill-hodet
 	var pulse : float = (sin(_time * 3.0) + 1.0) * 0.5
 	draw_circle(Vector2(cx, dh_y + 40), 30, Color(glow.r, glow.g, glow.b, 0.08 + pulse * 0.06))
 	draw_circle(Vector2(cx, dh_y + 40), 18, Color(glow.r, glow.g, glow.b, 0.20 + pulse * 0.10))
+
+	# Ekstra varme-glow og partikkeleffekt ved aktiv mining
+	if mining:
+		draw_circle(Vector2(cx, dh_y + 50), 40, Color(1.0, 0.4, 0.1, 0.12 + pulse * 0.10))
+		draw_circle(Vector2(cx, dh_y + 60), 22, Color(1.0, 0.6, 0.2, 0.25 + pulse * 0.15))
+		# Gnist-prikker
+		if int(_time * 12) % 2 == 0:
+			for _s in 3:
+				draw_circle(
+					Vector2(cx + randf_range(-18, 18), dh_y + randf_range(40, 85)),
+					1.5 + randf() * 2.0, Color(1.0, 0.85, 0.3, 0.9))
 
 	# Hydraulikk-sylindere (sidene)
 	for side in [-1, 1]:
@@ -597,3 +620,149 @@ func _draw_navigation(cx: float, cond: int, lvl: int, glow: Color) -> void:
 		for s in 3:
 			var sx : float = cx - 50.0 + s * 50.0
 			draw_rect(Rect2(sx - 14, 172, 28, 48), Color(0.0, 0.0, 0.0, 0.5 * flick))
+
+func _draw_shield(cx: float, cond: int, lvl: int, glow: Color) -> void:
+	# Rørkobling til tak
+	draw_rect(Rect2(cx - 5, 72, 10, 160), Color(0.12, 0.15, 0.20))
+	draw_rect(Rect2(cx - 2, 72,  4, 160), Color(0.16, 0.20, 0.28))
+
+	# Skjold-generator (sekskant-form)
+	var pulse : float = (sin(_time * 1.4) + 1.0) * 0.5
+	var pts   : PackedVector2Array = PackedVector2Array()
+	for i in 6:
+		var a : float = i * TAU / 6.0 - PI / 6.0
+		pts.append(Vector2(cx + cos(a) * 52.0, 320.0 + sin(a) * 52.0))
+	draw_colored_polygon(pts, Color(0.10, 0.12, 0.18))
+	draw_polyline(PackedVector2Array([pts[0], pts[1], pts[2], pts[3], pts[4], pts[5], pts[0]]),
+		Color(glow.r, glow.g, glow.b, 0.6), 2.5)
+
+	# Indre kjerne
+	draw_circle(Vector2(cx, 320), 28, Color(glow.r, glow.g, glow.b, 0.08 + pulse * 0.06))
+	draw_circle(Vector2(cx, 320), 16, Color(glow.r, glow.g, glow.b, 0.20 + pulse * 0.15))
+	draw_circle(Vector2(cx, 320),  6, Color(glow.r, glow.g, glow.b, 0.70 + pulse * 0.20))
+
+	# Energiringer (animerte)
+	for ri in 3:
+		var rr : float = 34.0 + ri * 14.0
+		var ra : float = _time * 0.8 + ri * TAU / 3.0
+		draw_arc(Vector2(cx, 320), rr, ra, ra + TAU * 0.65, 24,
+			Color(glow.r, glow.g, glow.b, 0.25 - ri * 0.06), 2.0)
+
+	# Sokkel
+	draw_rect(Rect2(cx - 30, 372, 60, 90), Color(0.12, 0.14, 0.20))
+	draw_rect(Rect2(cx - 26, 376, 52, 82), Color(0.09, 0.11, 0.15))
+
+	# Nivå
+	for n in min(lvl, 3):
+		draw_circle(Vector2(cx - 16 + n * 16, 242), 4, Color(0.35, 0.70, 1.0))
+
+	# Skade: felt flimrer
+	if cond < 45:
+		var fl : float = abs(sin(_time * 8.0))
+		draw_circle(Vector2(cx, 320), 56, Color(1.0, 0.3, 0.1, 0.10 * fl))
+
+func _draw_laser_cannon(cx: float, cond: int, lvl: int, glow: Color) -> void:
+	# Veggfeste / kraftenhet bak
+	draw_rect(Rect2(cx - 30, 200, 60, 220), Color(0.11, 0.13, 0.18))
+	draw_rect(Rect2(cx - 26, 204, 52, 212), Color(0.09, 0.11, 0.15))
+
+	# Kanonrør (peker rett frem / ned)
+	draw_rect(Rect2(cx - 12, 155, 24, 200), Color(0.16, 0.19, 0.27))
+	draw_rect(Rect2(cx -  6, 155, 12, 200), Color(0.20, 0.24, 0.34))
+
+	# Kanonmunning
+	draw_rect(Rect2(cx - 18, 145, 36, 14), Color(0.18, 0.22, 0.30))
+	draw_rect(Rect2(cx -  8, 143,  16, 4), Color(0.26, 0.32, 0.46))
+
+	# Laser-kjerne (pulserende)
+	var pulse  : float = (sin(_time * 3.5) + 1.0) * 0.5
+	var charge : float = (sin(_time * 7.0) + 1.0) * 0.5
+	draw_circle(Vector2(cx, 152), 10, Color(glow.r, glow.g, glow.b, 0.30 + pulse * 0.25))
+	draw_circle(Vector2(cx, 152),  5, Color(1.0, 0.85, 0.5, 0.70 + charge * 0.25))
+
+	# Laser-stråle (synlig energibane nedover røret)
+	for li in 5:
+		var ly  : float = 158.0 + li * 36.0
+		var lw  : float = 1.5 + charge * 2.5
+		draw_line(Vector2(cx, ly), Vector2(cx, ly + 24),
+			Color(glow.r, glow.g, glow.b, 0.15 + charge * 0.30 - li * 0.03), lw)
+
+	# Kjølevinger (begge sider)
+	for side in [-1, 1]:
+		var fin := PackedVector2Array([
+			Vector2(cx + side * 12, 250),
+			Vector2(cx + side * 42, 230),
+			Vector2(cx + side * 44, 290),
+			Vector2(cx + side * 14, 310),
+		])
+		draw_colored_polygon(fin, Color(0.13, 0.15, 0.22))
+		draw_polyline(fin, Color(0.20, 0.24, 0.34), 1.5)
+
+	# Rørtilkobling til kraftenhet
+	draw_rect(Rect2(cx - 4, 355, 8, 65), Color(0.14, 0.17, 0.23))
+
+	# Nivå
+	for n in min(lvl, 3):
+		draw_circle(Vector2(cx - 16 + n * 16, 210), 4, Color(0.35, 0.70, 1.0))
+
+	# Skade: energilekkasje
+	if cond < 45 and int(_time * 6) % 3 == 0:
+		draw_circle(Vector2(cx + randf_range(-14, 14), randf_range(155, 350)),
+			2.0, Color(1.0, 0.3, 0.1, 0.8))
+
+func _draw_torpedo(cx: float, cond: int, lvl: int, glow: Color) -> void:
+	# Tak-rørkobling
+	draw_rect(Rect2(cx - 6, 72, 12, 100), Color(0.14, 0.17, 0.22))
+	draw_rect(Rect2(cx - 3, 72,  6, 100), Color(0.18, 0.22, 0.30))
+
+	# Torpedorørhus
+	draw_rect(Rect2(cx - 48, 170, 96, 240), Color(0.11, 0.13, 0.19))
+	draw_rect(Rect2(cx - 44, 174, 88, 232), Color(0.09, 0.11, 0.16))
+
+	# 3 rør (torpedorammer)
+	for ti in 3:
+		var ty : float = 188.0 + ti * 70.0
+		# Rørring ytre
+		draw_rect(Rect2(cx - 42, ty, 84, 48), Color(0.14, 0.16, 0.22))
+		draw_rect(Rect2(cx - 38, ty + 4, 76, 40), Color(0.07, 0.08, 0.12))
+		# Torpedo-profil inne i røret
+		var torp := PackedVector2Array([
+			Vector2(cx - 24, ty + 8),
+			Vector2(cx + 24, ty + 8),
+			Vector2(cx + 30, ty + 24),
+			Vector2(cx + 24, ty + 40),
+			Vector2(cx - 24, ty + 40),
+			Vector2(cx - 30, ty + 24),
+		])
+		var t_col : Color = Color(0.18, 0.22, 0.30)
+		draw_colored_polygon(torp, t_col)
+		# Ladeindikator
+		var pulse  : float = (sin(_time * 1.2 + ti * 1.1) + 1.0) * 0.5
+		draw_rect(Rect2(cx - 22, ty + 20, int(44.0 * pulse), 6),
+			Color(glow.r, glow.g, glow.b, 0.55))
+		# Torpedo-spiss
+		draw_colored_polygon(PackedVector2Array([
+			Vector2(cx - 8, ty + 8),
+			Vector2(cx + 8, ty + 8),
+			Vector2(cx, ty),
+		]), Color(0.30, 0.36, 0.50))
+
+	# Kontrollpanel (høyre side)
+	draw_rect(Rect2(cx + 48, 200, 40, 100), Color(0.10, 0.12, 0.16))
+	for bi in 6:
+		var brow : int = bi / 2
+		var bcol : int = bi % 2
+		var bc   : Color = Color(0.9, 0.2, 0.2) if bi < 2 else \
+			(Color(0.9, 0.75, 0.2) if bi < 4 else Color(0.2, 0.8, 0.4))
+		var blink3 : bool = int(_time * 0.9 + bi * 0.4) % 2 == 0
+		draw_circle(Vector2(cx + 58 + bcol * 18, 218 + brow * 24), 5,
+			bc if blink3 else bc * 0.3)
+
+	# Nivå
+	for n in min(lvl, 3):
+		draw_circle(Vector2(cx - 16 + n * 16, 180), 4, Color(0.35, 0.70, 1.0))
+
+	# Skade: ladesvikt
+	if cond < 45:
+		var fl : float = abs(sin(_time * 6.0))
+		draw_rect(Rect2(cx - 44, 174, 88, 232), Color(1.0, 0.2, 0.1, 0.06 * fl))

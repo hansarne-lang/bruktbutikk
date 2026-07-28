@@ -22,7 +22,6 @@ const MINE_AMT             := 1
 var _current_mineral  : String = ""
 var _mining_active    : bool   = false
 var _stars            : Array  = []
-var _drill_angle      : float  = 0.0
 var _time             : float  = 0.0
 var _particles        : Array  = []  # {x, y, vx, vy, life, color}
 
@@ -72,7 +71,6 @@ const C_TUBE   := Color(0.28, 0.38, 0.46)
 const C_SHIP   := Color(0.55, 0.65, 0.75)
 const C_SHIP_W := Color(0.80, 0.90, 1.00)
 const C_TANK   := Color(0.30, 0.42, 0.38)
-const C_DRILL  := Color(0.55, 0.50, 0.40)
 
 func _ready() -> void:
 	for _i in 140:
@@ -139,7 +137,6 @@ func _process(delta: float) -> void:
 			_refresh_engine_room()
 
 	if _mining_active:
-		_drill_angle += delta * 5.0
 		# Dag/natt-syklus: fremskrider sakte under mining
 		var tod : float = SaveManager.game_data.get("time_of_day", 0.0)
 		SaveManager.game_data["time_of_day"] = fmod(tod + delta * 0.012, TAU)
@@ -177,6 +174,7 @@ func _on_mine_toggled() -> void:
 		# Stopp direkte
 		mine_timer.stop()
 		_mining_active = false
+		SaveManager.game_data["mining_active"] = false
 		$UI/ActionBar/MineButton.text = "Start mining"
 		_set_status("Gruvedrift stoppet.")
 	else:
@@ -216,6 +214,7 @@ func _on_mine_tick() -> void:
 			_show_overflow_dialog()
 			mine_timer.stop()
 			_mining_active = false
+			SaveManager.game_data["mining_active"] = false
 			$UI/ActionBar/MineButton.text = "Start mining"
 			return
 	if ok:
@@ -328,6 +327,7 @@ func _resume_mining_same_zone() -> void:
 
 func _restart_mining() -> void:
 	_mining_active = true
+	SaveManager.game_data["mining_active"] = true
 	mine_timer.start()
 	$UI/ActionBar/MineButton.text = "Stopp mining"
 	_refresh_ui()
@@ -378,6 +378,7 @@ func _on_site_clicked(site: Dictionary) -> void:
 	_close_map()
 	# Start mining
 	_mining_active = true
+	SaveManager.game_data["mining_active"] = true
 	mine_timer.start()
 	$UI/ActionBar/MineButton.text = "Stopp mining"
 	var hint : String = (cat if scanner else ZONE_HINTS.get(cat, ""))
@@ -817,9 +818,6 @@ func _draw() -> void:
 	for i in tanks.size():
 		_draw_tank(160.0 + i * 70.0, 320.0, tanks[i])
 
-	# Drill
-	_draw_drill(980.0, 370.0)
-
 	# Skip
 	_draw_ship(1050.0, 330.0)
 
@@ -877,23 +875,6 @@ func _draw_tank(x: float, base_y: float, tank: Dictionary) -> void:
 		draw_rect(Rect2(x + 3, base_y - 3 - (th - 9) * fill, tw - 6, (th - 9) * fill), fill_col)
 	draw_rect(Rect2(x, base_y - th, tw, th), Color(0.5, 0.65, 0.6, 0.7), false, 1.5)
 	draw_rect(Rect2(x + tw / 2 - 3, base_y, 6, 10), C_TUBE)
-
-func _draw_drill(x: float, base_y: float) -> void:
-	# Arm og support
-	draw_rect(Rect2(x - 4, base_y - 60, 8, 60),  C_DRILL)
-	draw_rect(Rect2(x - 22, base_y - 62, 44, 6), C_DRILL)
-	# Roterende drillhode (#6)
-	var tip_col := Color(0.7, 0.6, 0.3)
-	if _mining_active:
-		tip_col = tip_col.lerp(Color(1.0, 0.45, 0.05), 0.5 + sin(_drill_angle * 3.0) * 0.5)
-		# Varme-glow
-		draw_circle(Vector2(x, base_y + 6), 14.0 + sin(_time * 8.0) * 3.0,
-			Color(1.0, 0.4, 0.1, 0.18 + sin(_time * 5.0) * 0.08))
-	draw_set_transform(Vector2(x, base_y), _drill_angle if _mining_active else 0.0)
-	draw_colored_polygon(
-		PackedVector2Array([Vector2(-10, 0), Vector2(10, 0), Vector2(0, 22)]),
-		tip_col)
-	draw_set_transform(Vector2.ZERO, 0.0)
 
 func _draw_ship(cx: float, base_y: float) -> void:
 	draw_colored_polygon(PackedVector2Array([
